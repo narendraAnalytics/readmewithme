@@ -2,14 +2,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 // Feature Card Component
 const FeatureCard = ({ emoji, title, description, color }: { emoji: string; title: string; description: string; color: string }) => (
-  <View style={[styles.featureCard, { backgroundColor: color }]}>
+  <Animated.View
+    entering={FadeIn.duration(600).springify()}
+    style={[styles.featureCard, { backgroundColor: color }]}>
     <Text style={styles.featureEmoji}>{emoji}</Text>
     <Text style={styles.featureTitle}>{title}</Text>
     <Text style={styles.featureDescription}>{description}</Text>
-  </View>
+  </Animated.View>
 );
 
 export default function HomeScreen() {
