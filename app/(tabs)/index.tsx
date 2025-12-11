@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MaskedView from '@react-native-masked-view/masked-view';
+import { Ionicons } from '@expo/vector-icons';
 
 // Feature Card Component
 const FeatureCard = ({ emoji, title, description, color }: { emoji: string; title: string; description: string; color: string }) => (
@@ -56,10 +57,19 @@ export default function HomeScreen() {
         </Text>
 
         <TouchableOpacity
-          style={styles.button}
           activeOpacity={0.8}
-          onPress={() => console.log('Get Started pressed')}>
-          <Text style={styles.buttonText}>Get Started</Text>
+          onPress={() => console.log('Get Started pressed')}
+          style={styles.buttonContainer}>
+          <LinearGradient
+            colors={['#8B5CF6', '#EC4899']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.button}>
+            <View style={styles.buttonContent}>
+              <Ionicons name="book-outline" size={20} color="#FFFFFF" />
+              <Text style={styles.buttonText}>Get Started</Text>
+            </View>
+          </LinearGradient>
         </TouchableOpacity>
 
         <View style={styles.descriptionContainer}>
@@ -72,7 +82,22 @@ export default function HomeScreen() {
 
         {/* Features Section */}
         <View style={styles.featuresSection}>
-          <Text style={styles.sectionHeader}>Why ReadWithME?</Text>
+          <MaskedView
+            maskElement={
+              <Text style={[styles.sectionHeader, styles.gradientText]}>
+                Why ReadWithME?
+              </Text>
+            }>
+            <LinearGradient
+              colors={['#8B5CF6', '#EC4899']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.gradientContainer}>
+              <Text style={[styles.sectionHeader, { opacity: 0 }]}>
+                Why ReadWithME?
+              </Text>
+            </LinearGradient>
+          </MaskedView>
 
           <View style={styles.cardsGrid}>
             <FeatureCard
@@ -164,27 +189,40 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     maxWidth: 600,
   },
-  button: {
-    backgroundColor: '#48BB78',
-    paddingVertical: 16,
-    paddingHorizontal: 48,
-    borderRadius: 30,
+  buttonContainer: {
     marginTop: 16,
     marginBottom: 16,
+    borderRadius: 30,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 6,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  button: {
+    paddingVertical: 16,
+    paddingHorizontal: 48,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: 'bold',
     textAlign: 'center',
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.15)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   featuresSection: {
     width: '100%',
@@ -194,7 +232,6 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2c3e50',
     textAlign: 'center',
     marginBottom: 32,
   },

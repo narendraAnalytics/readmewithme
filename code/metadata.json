@@ -1,0 +1,7 @@
+{
+  "name": "ReadWithMe",
+  "description": "An intelligent reading companion using Gemini 3 Pro with Google Search for real-time book insights, summaries, and quizzes, plus Gemini 2.5 Live API for voice conversations.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
