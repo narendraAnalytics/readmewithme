@@ -1,98 +1,239 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import MaskedView from '@react-native-masked-view/masked-view';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+// Feature Card Component
+const FeatureCard = ({ emoji, title, description, color }: { emoji: string; title: string; description: string; color: string }) => (
+  <View style={[styles.featureCard, { backgroundColor: color }]}>
+    <Text style={styles.featureEmoji}>{emoji}</Text>
+    <Text style={styles.featureTitle}>{title}</Text>
+    <Text style={styles.featureDescription}>{description}</Text>
+  </View>
+);
 
 export default function HomeScreen() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <LinearGradient
+      colors={['#FFE5D9', '#FFF8F3']}
+      style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        {/* Hero Section with Logo Overlay */}
+        <View style={styles.heroContainer}>
+          <Image
+            source={require('@/public/images/landingPage.png')}
+            style={styles.heroImage}
+            resizeMode="contain"
+          />
+          <Image
+            source={require('@/public/images/logo.png')}
+            style={styles.logoOverlay}
+            resizeMode="contain"
+          />
+        </View>
+
+        <MaskedView
+          maskElement={
+            <Text style={[styles.headline, styles.gradientText]}>
+              Your AI Reading Companion
+            </Text>
+          }>
+          <LinearGradient
+            colors={['#FF6B35', '#F7931E', '#FDC830']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.gradientContainer}>
+            <Text style={[styles.headline, { opacity: 0 }]}>
+              Your AI Reading Companion
+            </Text>
+          </LinearGradient>
+        </MaskedView>
+
+        <Text style={styles.subtitle}>
+          Learn faster with your personal AI reading assistant
+        </Text>
+
+        <TouchableOpacity
+          style={styles.button}
+          activeOpacity={0.8}
+          onPress={() => console.log('Get Started pressed')}>
+          <Text style={styles.buttonText}>Get Started</Text>
+        </TouchableOpacity>
+
+        <View style={styles.descriptionContainer}>
+          <Text style={styles.description}>
+            Get instant answers, explanations, and summaries as you read.
+            Transform any text into an interactive learning experience with
+            AI-powered comprehension support.
+          </Text>
+        </View>
+
+        {/* Features Section */}
+        <View style={styles.featuresSection}>
+          <Text style={styles.sectionHeader}>Why ReadWithME?</Text>
+
+          <View style={styles.cardsGrid}>
+            <FeatureCard
+              emoji="⚡"
+              title="Instant Answers"
+              description="No waiting for explanations"
+              color="#E3F2FD"
+            />
+            <FeatureCard
+              emoji="🧠"
+              title="Better Understanding"
+              description="Grasp complex topics faster"
+              color="#F3E5F5"
+            />
+            <FeatureCard
+              emoji="📖"
+              title="Interactive Reading"
+              description="Turn any text into a lesson"
+              color="#E8F5E9"
+            />
+            <FeatureCard
+              emoji="🎓"
+              title="Personalized Learning"
+              description="AI adapts to your level"
+              color="#FFE0E0"
+            />
+          </View>
+        </View>
+
+      </ScrollView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
   },
-  stepContainer: {
-    gap: 8,
+  scrollContent: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+  },
+  heroContainer: {
+    width: 300,
+    height: 300,
+    marginBottom: 32,
+    position: 'relative',
+    alignItems: 'center',
+  },
+  heroImage: {
+    width: 300,
+    height: 300,
+  },
+  logoOverlay: {
+    width: 120,
+    height: 60,
+    position: 'absolute',
+    top: 2,
+    alignSelf: 'center',
+  },
+  headline: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  gradientText: {
+    backgroundColor: 'transparent',
+  },
+  gradientContainer: {
+    alignItems: 'center',
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 26,
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  descriptionContainer: {
+    marginTop: 0,
+    paddingHorizontal: 16,
+  },
+  description: {
+    fontSize: 16,
+    color: '#555',
+    textAlign: 'center',
+    lineHeight: 24,
+    maxWidth: 600,
+  },
+  button: {
+    backgroundColor: '#48BB78',
+    paddingVertical: 16,
+    paddingHorizontal: 48,
+    borderRadius: 30,
+    marginTop: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  featuresSection: {
+    width: '100%',
+    marginTop: 60,
+    marginBottom: 20,
+  },
+  sectionHeader: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  cardsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  featureCard: {
+    width: '45%',
+    minWidth: 120,
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  featureEmoji: {
+    fontSize: 32,
+    marginBottom: 12,
+  },
+  featureTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  featureDescription: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
