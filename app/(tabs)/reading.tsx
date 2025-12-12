@@ -11,6 +11,8 @@ export default function ReadingScreen() {
   const bookTitle = params.title as string;
   const bookAuthor = params.author as string;
   const publishedDate = params.publishedDate as string;
+  const topic = params.topic as string;
+  const results = params.results as string;
 
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
@@ -51,7 +53,7 @@ export default function ReadingScreen() {
     if (!content) return null;
 
     const lines = content.split('\n');
-    const elements: JSX.Element[] = [];
+    const elements: React.ReactElement[] = [];
 
     lines.forEach((line, index) => {
       const trimmed = line.trim();
@@ -127,7 +129,13 @@ export default function ReadingScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}>
+          onPress={() => router.push({
+            pathname: '/book-results',
+            params: {
+              topic: topic,
+              results: results,
+            },
+          })}>
           <Ionicons name="arrow-back" size={24} color="#8B5CF6" />
         </TouchableOpacity>
         <View style={styles.headerContent}>

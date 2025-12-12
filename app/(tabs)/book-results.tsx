@@ -32,6 +32,8 @@ export default function BookResultsScreen() {
         title: book.title,
         author: book.author,
         publishedDate: book.publishedDate || '',
+        topic: topicName,
+        results: resultsText,
       },
     });
   };

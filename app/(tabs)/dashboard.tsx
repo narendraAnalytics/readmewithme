@@ -154,7 +154,7 @@ export default function DashboardScreen() {
         {loading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#8B5CF6" />
-            <Text style={styles.loadingText}>Fetching recommendations...</Text>
+            <Text style={styles.loadingText}>Consulting the library...</Text>
           </View>
         )}
 

@@ -2548,5 +2548,3 @@ Use Google Search to ensure accuracy.
 **Last Updated:** Session 4 (Reading View Implementation)
 **Status:** Production Ready
 **Next Steps:** Optional enhancements (multi-language, quiz, bookmarks)
-
-fetching recommendations
