@@ -36,8 +36,9 @@ export const TopicCard: React.FC<TopicCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    width: '48%',
+    flex: 1,
     minWidth: 150,
+    maxWidth: '48%',
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,

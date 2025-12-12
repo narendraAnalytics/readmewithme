@@ -4,18 +4,57 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withRepeat,
+  withSequence
+} from 'react-native-reanimated';
+import { router } from 'expo-router';
 import { TopicCard } from '@/components/dashboard/TopicCard';
 import { SearchBar } from '@/components/dashboard/SearchBar';
 import { TOPICS } from '@/constants/dashboard';
 import { getBooksByTopic, searchBooks } from '@/services/api';
 
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+
 export default function DashboardScreen() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<string>('');
   const [error, setError] = useState<string>('');
+
+  // Animation for home icon
+  const scale = useSharedValue(1);
+  const rotation = useSharedValue(0);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: scale.value },
+      { rotate: `${rotation.value}deg` }
+    ],
+  }));
+
+  const handleHomePress = () => {
+    // Animate on press
+    scale.value = withSequence(
+      withSpring(0.8, { damping: 2 }),
+      withSpring(1, { damping: 2 })
+    );
+    rotation.value = withSequence(
+      withSpring(-15, { damping: 8 }),
+      withSpring(15, { damping: 8 }),
+      withSpring(0, { damping: 8 })
+    );
+
+    // Navigate to home
+    setTimeout(() => router.push('/'), 300);
+  };
 
   const handleTopicSelect = async (topicName: string) => {
     setLoading(true);
@@ -57,10 +96,22 @@ export default function DashboardScreen() {
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Discover Books</Text>
-          <Text style={styles.subtitle}>
-            Explore topics or search for any book
-          </Text>
+          <View style={styles.headerContent}>
+            <View style={styles.headerTextContainer}>
+              <Text style={styles.title}>Discover Books</Text>
+              <Text style={styles.subtitle}>
+                Explore topics or search for any book
+              </Text>
+            </View>
+
+            {/* Animated Home Icon */}
+            <AnimatedTouchable
+              style={[styles.homeButton, animatedStyle]}
+              onPress={handleHomePress}
+              activeOpacity={0.7}>
+              <Ionicons name="home" size={28} color="#8B5CF6" />
+            </AnimatedTouchable>
+          </View>
         </View>
 
         {/* Search Bar */}
@@ -123,6 +174,14 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 24,
   },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTextContainer: {
+    flex: 1,
+  },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
@@ -132,6 +191,23 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: '#666',
+  },
+  homeButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#F3E8FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#8B5CF6',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+    marginLeft: 16,
   },
   topicsSection: {
     paddingHorizontal: 20,
@@ -145,7 +221,8 @@ const styles = StyleSheet.create({
   topicsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
+    gap: 12,
   },
   loadingContainer: {
     alignItems: 'center',
