@@ -2,6 +2,20 @@ import { generateBookContent } from './gemini';
 import { Book } from './types';
 
 /**
+ * Type guard to check if a Partial<Book> has all required Book properties
+ */
+function isCompleteBook(book: Partial<Book> | null): book is Book {
+  return (
+    book !== null &&
+    typeof book.title === 'string' &&
+    book.title.length > 0 &&
+    typeof book.author === 'string' &&
+    book.author.length > 0 &&
+    typeof book.description === 'string'
+  );
+}
+
+/**
  * Parse markdown book recommendations into Book objects
  * Format: ### Title by Author | Date
  */
@@ -15,8 +29,8 @@ export const parseBooks = (markdownText: string): Book[] => {
   lines.forEach(line => {
     if (line.trim().startsWith('###')) {
       // Save previous book if exists
-      if (currentBook && currentBook.title && currentBook.author) {
-        books.push(currentBook as Book);
+      if (isCompleteBook(currentBook)) {
+        books.push(currentBook);
       }
 
       // Parse new header: ### Title by Author | Date
@@ -63,8 +77,8 @@ export const parseBooks = (markdownText: string): Book[] => {
   });
 
   // Don't forget the last book
-  if (currentBook && currentBook.title && currentBook.author) {
-    books.push(currentBook as Book);
+  if (isCompleteBook(currentBook)) {
+    books.push(currentBook);
   }
 
   return books;

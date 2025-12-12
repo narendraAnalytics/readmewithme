@@ -1,8 +1,8 @@
+import { Book } from '@/services/types';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { Book } from '@/services/types';
 
 interface BookCardProps {
   book: Book;
