@@ -5,6 +5,8 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
 import { generateBookContent } from '@/services/gemini';
+import MaskedView from '@react-native-masked-view/masked-view';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ReadingScreen() {
   const params = useLocalSearchParams();
@@ -48,6 +50,34 @@ export default function ReadingScreen() {
     }
   };
 
+  // Helper component for gradient text
+  const GradientText = ({
+    children,
+    colors,
+    style
+  }: {
+    children: React.ReactNode;
+    colors: readonly string[];
+    style?: any;
+  }) => {
+    return (
+      <MaskedView
+        maskElement={
+          <Text style={[style, { backgroundColor: 'transparent' }]}>
+            {children}
+          </Text>
+        }>
+        <LinearGradient
+          colors={colors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{ flex: 1 }}>
+          <Text style={[style, { opacity: 0 }]}>{children}</Text>
+        </LinearGradient>
+      </MaskedView>
+    );
+  };
+
   // Parse markdown and render
   const renderContent = () => {
     if (!content) return null;
@@ -67,9 +97,12 @@ export default function ReadingScreen() {
       if (trimmed.startsWith('##') && !trimmed.startsWith('###')) {
         const text = trimmed.replace(/^##\s*/, '');
         elements.push(
-          <Text key={index} style={styles.heading1}>
+          <GradientText
+            key={index}
+            colors={['#8B5CF6', '#EC4899']}
+            style={styles.heading1}>
             {parseBoldText(text)}
-          </Text>
+          </GradientText>
         );
         return;
       }
@@ -78,9 +111,12 @@ export default function ReadingScreen() {
       if (trimmed.startsWith('###')) {
         const text = trimmed.replace(/^###\s*/, '');
         elements.push(
-          <Text key={index} style={styles.heading2}>
+          <GradientText
+            key={index}
+            colors={['#3B82F6', '#06B6D4']}
+            style={styles.heading2}>
             {parseBoldText(text)}
-          </Text>
+          </GradientText>
         );
         return;
       }
@@ -114,9 +150,20 @@ export default function ReadingScreen() {
     return parts.map((part, i) => {
       if (i % 2 === 1) {
         return (
-          <Text key={i} style={styles.bold}>
-            {part}
-          </Text>
+          <MaskedView
+            key={i}
+            maskElement={
+              <Text style={[styles.bold, { backgroundColor: 'transparent' }]}>
+                {part}
+              </Text>
+            }>
+            <LinearGradient
+              colors={['#F97316', '#EF4444']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}>
+              <Text style={[styles.bold, { opacity: 0 }]}>{part}</Text>
+            </LinearGradient>
+          </MaskedView>
         );
       }
       return part;
@@ -237,7 +284,6 @@ const styles = StyleSheet.create({
   heading1: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2c3e50',
     marginTop: 24,
     marginBottom: 12,
     lineHeight: 32,
@@ -245,7 +291,6 @@ const styles = StyleSheet.create({
   heading2: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#34495e',
     marginTop: 20,
     marginBottom: 10,
     lineHeight: 28,
@@ -258,7 +303,6 @@ const styles = StyleSheet.create({
   },
   bold: {
     fontWeight: 'bold',
-    color: '#2c3e50',
   },
   listItem: {
     flexDirection: 'row',
