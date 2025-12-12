@@ -93,16 +93,21 @@ export const parseBooks = (markdownText: string): Book[] => {
  * Get book recommendations by topic
  */
 export const getBooksByTopic = async (topicName: string): Promise<string> => {
-  const prompt = `Recommend 5 interesting books about "${topicName}".
+  const prompt = `Recommend 5 highly-rated books about "${topicName}".
+  IMPORTANT: Prioritize the MOST RECENT publications (from the last 2-3 years if available). Sort these books by publication date in DESCENDING order (newest/most recent books first).
+
   For each book, provide:
   - Title
   - Author
-  - Publication year
+  - Publication year (in YYYY format)
   - Brief description (2-3 sentences)
 
-  Format each book as:
+  CRITICAL FORMATTING INSTRUCTION:
+  Format each book entry exactly like this:
   ### Title by Author | Year
-  Description`;
+  Description
+
+  Use Google Search to find the most recent, highly-rated books and ensure the published dates are accurate.`;
 
   const response = await generateBookContent(prompt, true);
   return response.text;
@@ -112,16 +117,21 @@ export const getBooksByTopic = async (topicName: string): Promise<string> => {
  * Search books by custom query
  */
 export const searchBooks = async (query: string): Promise<string> => {
-  const prompt = `Find 3-5 books related to: "${query}".
+  const prompt = `Find 3-5 best books related to: "${query}".
+  IMPORTANT: Prioritize the MOST RECENT publications (from the last 2-3 years if available). Sort these books by publication date in DESCENDING order (newest/most recent books first).
+
   For each book, provide:
   - Title
   - Author
-  - Publication year
+  - Publication year (in YYYY format)
   - Brief description (2-3 sentences)
 
-  Format each book as:
+  CRITICAL FORMATTING INSTRUCTION:
+  Format each book entry exactly like this:
   ### Title by Author | Year
-  Description`;
+  Description
+
+  Use Google Search to find the most recent, relevant, and popular books and verify published dates are accurate.`;
 
   const response = await generateBookContent(prompt, true);
   return response.text;

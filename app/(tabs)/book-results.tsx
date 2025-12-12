@@ -26,9 +26,14 @@ export default function BookResultsScreen() {
   };
 
   const handleReadBook = (book: Book) => {
-    // TODO: Navigate to reading screen (future feature)
-    console.log('Read book:', book.title);
-    alert(`Reading feature coming soon!\n\nBook: ${book.title}\nAuthor: ${book.author}`);
+    router.push({
+      pathname: '/reading',
+      params: {
+        title: book.title,
+        author: book.author,
+        publishedDate: book.publishedDate || '',
+      },
+    });
   };
 
   return (
