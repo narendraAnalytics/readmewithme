@@ -1,4 +1,74 @@
 import { generateBookContent } from './gemini';
+import { Book } from './types';
+
+/**
+ * Parse markdown book recommendations into Book objects
+ * Format: ### Title by Author | Date
+ */
+export const parseBooks = (markdownText: string): Book[] => {
+  if (!markdownText) return [];
+
+  const books: Book[] = [];
+  const lines = markdownText.split('\n');
+  let currentBook: Partial<Book> | null = null;
+
+  lines.forEach(line => {
+    if (line.trim().startsWith('###')) {
+      // Save previous book if exists
+      if (currentBook && currentBook.title && currentBook.author) {
+        books.push(currentBook as Book);
+      }
+
+      // Parse new header: ### Title by Author | Date
+      const cleanLine = line.replace(/^###\s*/, '').trim();
+
+      let titleAndAuthor = cleanLine;
+      let publishedDate = '';
+
+      // Check for date separator '|'
+      if (cleanLine.includes('|')) {
+        const splitDate = cleanLine.split('|');
+        publishedDate = splitDate.pop()?.trim() || '';
+        titleAndAuthor = splitDate.join('|').trim();
+      }
+
+      // Split Title by Author
+      const parts = titleAndAuthor.split(/ by /i);
+      if (parts.length >= 2) {
+        const author = parts.pop(); // Last part is author
+        const title = parts.join(' by '); // Rejoin rest as title
+        currentBook = {
+          title: title?.trim(),
+          author: author?.trim(),
+          publishedDate: publishedDate,
+          description: ''
+        };
+      } else {
+        // Fallback if "by" isn't found
+        currentBook = {
+          title: titleAndAuthor,
+          author: 'Unknown',
+          publishedDate: publishedDate,
+          description: ''
+        };
+      }
+    } else if (currentBook) {
+      // Append to description if it's not a markdown header or empty line
+      if (line.trim() && !line.trim().startsWith('#') && !line.trim().startsWith('[')) {
+        // Remove bold markers from description
+        const cleanDesc = line.replace(/\*\*/g, '');
+        currentBook.description = (currentBook.description + ' ' + cleanDesc).trim();
+      }
+    }
+  });
+
+  // Don't forget the last book
+  if (currentBook && currentBook.title && currentBook.author) {
+    books.push(currentBook as Book);
+  }
+
+  return books;
+};
 
 /**
  * Get book recommendations by topic

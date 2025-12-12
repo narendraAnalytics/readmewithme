@@ -63,7 +63,14 @@ export default function DashboardScreen() {
 
     try {
       const response = await getBooksByTopic(topicName);
-      setResults(response);
+      // Navigate to book results screen with the data
+      router.push({
+        pathname: '/book-results',
+        params: {
+          topic: topicName,
+          results: response,
+        },
+      });
     } catch (err: any) {
       setError(err.message || 'Failed to fetch recommendations. Please try again.');
       console.error(err);
@@ -79,7 +86,14 @@ export default function DashboardScreen() {
 
     try {
       const response = await searchBooks(query);
-      setResults(response);
+      // Navigate to book results screen with the data
+      router.push({
+        pathname: '/book-results',
+        params: {
+          topic: query,
+          results: response,
+        },
+      });
     } catch (err: any) {
       setError(err.message || 'Failed to search books. Please try again.');
       console.error(err);
@@ -117,24 +131,26 @@ export default function DashboardScreen() {
         {/* Search Bar */}
         <SearchBar onSearch={handleSearch} />
 
-        {/* Topic Grid */}
-        <View style={styles.topicsSection}>
-          <Text style={styles.sectionTitle}>Browse by Topic</Text>
-          <View style={styles.topicsGrid}>
-            {TOPICS.map((topic) => (
-              <TopicCard
-                key={topic.id}
-                name={topic.name}
-                icon={topic.icon}
-                color={topic.color}
-                description={topic.description}
-                onPress={() => handleTopicSelect(topic.name)}
-              />
-            ))}
+        {/* Topic Grid - Hidden when loading */}
+        {!loading && (
+          <View style={styles.topicsSection}>
+            <Text style={styles.sectionTitle}>Browse by Topic</Text>
+            <View style={styles.topicsGrid}>
+              {TOPICS.map((topic) => (
+                <TopicCard
+                  key={topic.id}
+                  name={topic.name}
+                  icon={topic.icon}
+                  color={topic.color}
+                  description={topic.description}
+                  onPress={() => handleTopicSelect(topic.name)}
+                />
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
-        {/* Loading State */}
+        {/* Loading State - Centered on screen */}
         {loading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#8B5CF6" />
@@ -143,17 +159,9 @@ export default function DashboardScreen() {
         )}
 
         {/* Error State */}
-        {error && (
+        {error && !loading && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
-
-        {/* Results */}
-        {results && !loading && (
-          <View style={styles.resultsContainer}>
-            <Text style={styles.resultsTitle}>Recommendations</Text>
-            <Text style={styles.resultsText}>{results}</Text>
           </View>
         )}
       </ScrollView>
@@ -226,7 +234,10 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     alignItems: 'center',
-    paddingVertical: 40,
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+    minHeight: 300,
   },
   loadingText: {
     marginTop: 12,
@@ -243,20 +254,5 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#DC2626',
     fontSize: 14,
-  },
-  resultsContainer: {
-    paddingHorizontal: 20,
-    marginTop: 24,
-  },
-  resultsTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    marginBottom: 16,
-  },
-  resultsText: {
-    fontSize: 15,
-    color: '#444',
-    lineHeight: 24,
   },
 });
