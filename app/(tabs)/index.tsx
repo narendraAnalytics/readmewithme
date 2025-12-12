@@ -3,6 +3,7 @@ import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import MaskedView from '@react-native-masked-view/masked-view';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { router } from 'expo-router';
 
 // Feature Card Component
 const FeatureCard = ({ emoji, title, description, color }: { emoji: string; title: string; description: string; color: string }) => (
@@ -61,7 +62,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => console.log('Get Started pressed')}
+          onPress={() => router.push('/dashboard')}
           style={styles.buttonContainer}>
           <LinearGradient
             colors={['#8B5CF6', '#EC4899']}
