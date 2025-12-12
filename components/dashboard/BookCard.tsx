@@ -26,7 +26,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
         {/* Author and Published Date */}
         <View style={styles.metaContainer}>
           <View style={styles.metaItem}>
-            <Ionicons name="person-outline" size={14} color="#666" />
+            <Ionicons name="person-outline" size={14} color="#8B5CF6" />
             <Text style={styles.metaText} numberOfLines={1}>
               {book.author}
             </Text>
@@ -34,7 +34,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
 
           {book.publishedDate && (
             <View style={styles.metaItem}>
-              <Ionicons name="calendar-outline" size={14} color="#999" />
+              <Ionicons name="calendar-outline" size={14} color="#10B981" />
               <Text style={styles.dateText}>{book.publishedDate}</Text>
             </View>
           )}
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: '#EC4899',
     marginBottom: 12,
     lineHeight: 24,
   },
@@ -97,11 +97,13 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 14,
-    color: '#666',
+    color: '#8B5CF6',
+    fontWeight: '600',
   },
   dateText: {
     fontSize: 14,
-    color: '#999',
+    color: '#10B981',
+    fontWeight: '500',
   },
   description: {
     fontSize: 14,

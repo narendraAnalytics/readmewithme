@@ -22,6 +22,11 @@ function isCompleteBook(book: Partial<Book> | null): book is Book {
 export const parseBooks = (markdownText: string): Book[] => {
   if (!markdownText) return [];
 
+  // Helper to remove brackets from text
+  const removeBrackets = (text: string): string => {
+    return text.replace(/^\[|\]$/g, '').trim();
+  };
+
   const books: Book[] = [];
   const lines = markdownText.split('\n');
   let currentBook: Partial<Book> | null = null;
@@ -52,17 +57,17 @@ export const parseBooks = (markdownText: string): Book[] => {
         const author = parts.pop(); // Last part is author
         const title = parts.join(' by '); // Rejoin rest as title
         currentBook = {
-          title: title?.trim(),
-          author: author?.trim(),
-          publishedDate: publishedDate,
+          title: removeBrackets(title?.trim() || ''),
+          author: removeBrackets(author?.trim() || ''),
+          publishedDate: removeBrackets(publishedDate),
           description: ''
         };
       } else {
         // Fallback if "by" isn't found
         currentBook = {
-          title: titleAndAuthor,
+          title: removeBrackets(titleAndAuthor),
           author: 'Unknown',
-          publishedDate: publishedDate,
+          publishedDate: removeBrackets(publishedDate),
           description: ''
         };
       }
@@ -96,8 +101,8 @@ export const getBooksByTopic = async (topicName: string): Promise<string> => {
   - Brief description (2-3 sentences)
 
   Format each book as:
-  ### [Title] by [Author] | [Year]
-  [Description]`;
+  ### Title by Author | Year
+  Description`;
 
   const response = await generateBookContent(prompt, true);
   return response.text;
@@ -115,8 +120,8 @@ export const searchBooks = async (query: string): Promise<string> => {
   - Brief description (2-3 sentences)
 
   Format each book as:
-  ### [Title] by [Author] | [Year]
-  [Description]`;
+  ### Title by Author | Year
+  Description`;
 
   const response = await generateBookContent(prompt, true);
   return response.text;

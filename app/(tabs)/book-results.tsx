@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   topicName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: '#F97316',
     textAlign: 'center',
   },
   scrollContent: {
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: '#FB923C',
   },
   emptyState: {
     alignItems: 'center',

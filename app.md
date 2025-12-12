@@ -1,3 +1,5 @@
+#### Consulting the library
+
 # ReadWithMe - AI Reading Companion App
 
 ## Overview
