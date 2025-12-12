@@ -20,8 +20,10 @@ export default function ReadingScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
+    setContent('');
     fetchReadingGuide();
-  }, []);
+  }, [bookTitle, bookAuthor]);
 
   const fetchReadingGuide = async () => {
     const prompt = `I want to read and understand the book "${bookTitle}" by "${bookAuthor}".
@@ -57,7 +59,7 @@ export default function ReadingScreen() {
     style
   }: {
     children: React.ReactNode;
-    colors: readonly string[];
+    colors: readonly [string, string, ...string[]];
     style?: any;
   }) => {
     return (
@@ -70,8 +72,7 @@ export default function ReadingScreen() {
         <LinearGradient
           colors={colors}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={{ flex: 1 }}>
+          end={{ x: 1, y: 0 }}>
           <Text style={[style, { opacity: 0 }]}>{children}</Text>
         </LinearGradient>
       </MaskedView>
