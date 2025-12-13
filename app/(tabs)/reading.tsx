@@ -7,6 +7,7 @@ import { TouchableOpacity } from 'react-native';
 import { generateBookContent } from '@/services/gemini';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { LinearGradient } from 'expo-linear-gradient';
+import { LANGUAGES, LanguageCode } from '@/constants/languages';
 
 export default function ReadingScreen() {
   const params = useLocalSearchParams();
@@ -18,10 +19,15 @@ export default function ReadingScreen() {
 
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
+  const [currentLang, setCurrentLang] = useState<LanguageCode>('en');
+  const [contentCache, setContentCache] = useState<Record<string, string>>({});
+  const [isTranslating, setIsTranslating] = useState(false);
 
   useEffect(() => {
     setLoading(true);
     setContent('');
+    setCurrentLang('en');
+    setContentCache({});
     fetchReadingGuide();
   }, [bookTitle, bookAuthor]);
 
@@ -44,11 +50,49 @@ export default function ReadingScreen() {
     try {
       const response = await generateBookContent(prompt, true);
       setContent(response.text);
+      setContentCache({ 'en': response.text });
     } catch (error) {
       console.error('Failed to fetch reading guide:', error);
       setContent('Failed to load reading guide. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLanguageChange = async (langCode: LanguageCode) => {
+    if (langCode === currentLang) return;
+
+    // Check cache first
+    if (contentCache[langCode]) {
+      setCurrentLang(langCode);
+      setContent(contentCache[langCode]);
+      return;
+    }
+
+    const originalText = contentCache['en'];
+    if (!originalText) return;
+
+    setIsTranslating(true);
+
+    try {
+      const targetLang = LANGUAGES.find(l => l.code === langCode)?.native || langCode;
+      const prompt = `Translate the following markdown text into ${targetLang}.
+IMPORTANT: Maintain all Markdown formatting exactly (headers ##, bold **, lists *, etc.).
+Do not shorten the content. Translate it fully and accurately.
+
+Content to translate:
+${originalText}`;
+
+      const response = await generateBookContent(prompt, false);
+
+      setContentCache(prev => ({ ...prev, [langCode]: response.text }));
+      setContent(response.text);
+      setCurrentLang(langCode);
+    } catch (error) {
+      console.error('Translation failed:', error);
+      alert('Translation failed. Please try again.');
+    } finally {
+      setIsTranslating(false);
     }
   };
 
@@ -196,6 +240,32 @@ export default function ReadingScreen() {
               <Text style={styles.dateText}>{publishedDate}</Text>
             </View>
           )}
+
+          {/* Language Selector */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.languageScrollContainer}
+            style={styles.languageScrollView}>
+            {LANGUAGES.map((lang) => (
+              <TouchableOpacity
+                key={lang.code}
+                style={[
+                  styles.languageButton,
+                  currentLang === lang.code && styles.languageButtonActive,
+                ]}
+                onPress={() => handleLanguageChange(lang.code as LanguageCode)}
+                disabled={isTranslating}>
+                <Text
+                  style={[
+                    styles.languageText,
+                    currentLang === lang.code && styles.languageTextActive,
+                  ]}>
+                  {lang.native}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
       </View>
 
@@ -207,7 +277,7 @@ export default function ReadingScreen() {
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#8B5CF6" />
             <Text style={styles.loadingText}>
-              Preparing your reading guide...
+              {isTranslating ? 'Translating content...' : 'Preparing your reading guide...'}
             </Text>
           </View>
         ) : (
@@ -335,5 +405,33 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: '#666',
+  },
+  languageScrollView: {
+    marginTop: 16,
+  },
+  languageScrollContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingRight: 8,
+  },
+  languageButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  languageButtonActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  languageText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  languageTextActive: {
+    color: '#8B5CF6',
   },
 });
