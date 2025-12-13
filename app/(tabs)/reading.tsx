@@ -142,12 +142,9 @@ ${originalText}`;
       if (trimmed.startsWith('##') && !trimmed.startsWith('###')) {
         const text = trimmed.replace(/^##\s*/, '');
         elements.push(
-          <GradientText
-            key={index}
-            colors={['#8B5CF6', '#EC4899']}
-            style={styles.heading1}>
-            {parseBoldText(text)}
-          </GradientText>
+          <Text key={index} style={styles.heading1}>
+            {text.replace(/\*\*/g, '')}
+          </Text>
         );
         return;
       }
@@ -156,12 +153,9 @@ ${originalText}`;
       if (trimmed.startsWith('###')) {
         const text = trimmed.replace(/^###\s*/, '');
         elements.push(
-          <GradientText
-            key={index}
-            colors={['#3B82F6', '#06B6D4']}
-            style={styles.heading2}>
-            {parseBoldText(text)}
-          </GradientText>
+          <Text key={index} style={styles.heading2}>
+            {text.replace(/\*\*/g, '')}
+          </Text>
         );
         return;
       }
@@ -191,7 +185,10 @@ ${originalText}`;
 
   // Parse **bold text** into Text components
   const parseBoldText = (text: string) => {
-    const parts = text.split(/\*\*(.*?)\*\*/g);
+    // Strip quotes first
+    const cleanText = text.replace(/["\"\"]/g, '');
+
+    const parts = cleanText.split(/\*\*(.*?)\*\*/g);
     return parts.map((part, i) => {
       if (i % 2 === 1) {
         return (
@@ -211,7 +208,7 @@ ${originalText}`;
           </MaskedView>
         );
       }
-      return part;
+      return <Text key={i}>{part}</Text>;
     });
   };
 
@@ -261,7 +258,7 @@ ${originalText}`;
                     styles.languageText,
                     currentLang === lang.code && styles.languageTextActive,
                   ]}>
-                  {lang.native}
+                  {lang.symbol}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -273,11 +270,13 @@ ${originalText}`;
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}>
-        {loading ? (
+        {(loading || isTranslating) ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#8B5CF6" />
             <Text style={styles.loadingText}>
-              {isTranslating ? 'Translating content...' : 'Preparing your reading guide...'}
+              {isTranslating
+                ? `Translating content.....${LANGUAGES.find(l => l.code === currentLang)?.label || ''}`
+                : 'Preparing your reading guide...'}
             </Text>
           </View>
         ) : (
@@ -358,6 +357,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 12,
     lineHeight: 32,
+    color: '#8B5CF6',
   },
   heading2: {
     fontSize: 20,
@@ -365,6 +365,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 10,
     lineHeight: 28,
+    color: '#3B82F6',
   },
   paragraph: {
     fontSize: 16,
