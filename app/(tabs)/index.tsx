@@ -2,19 +2,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeIn } from 'react-native-reanimated';
 import { router } from 'expo-router';
-
-// Feature Card Component
-const FeatureCard = ({ emoji, title, description, color }: { emoji: string; title: string; description: string; color: string }) => (
-  <Animated.View
-    entering={FadeIn.duration(600).springify()}
-    style={[styles.featureCard, { backgroundColor: color }]}>
-    <Text style={styles.featureEmoji}>{emoji}</Text>
-    <Text style={styles.featureTitle}>{title}</Text>
-    <Text style={styles.featureDescription}>{description}</Text>
-  </Animated.View>
-);
+import { FeaturesCarousel } from '@/components/landing/FeaturesCarousel';
 
 export default function HomeScreen() {
   return (
@@ -89,7 +78,7 @@ export default function HomeScreen() {
           <MaskedView
             maskElement={
               <Text style={[styles.sectionHeader, styles.gradientText]}>
-                Why ReadWithME?
+                Discover ReadWithME Features
               </Text>
             }>
             <LinearGradient
@@ -98,37 +87,13 @@ export default function HomeScreen() {
               end={{ x: 1, y: 0 }}
               style={styles.gradientContainer}>
               <Text style={[styles.sectionHeader, { opacity: 0 }]}>
-                Why ReadWithME?
+                Discover ReadWithME Features
               </Text>
             </LinearGradient>
           </MaskedView>
 
-          <View style={styles.cardsGrid}>
-            <FeatureCard
-              emoji="⚡"
-              title="Instant Answers"
-              description="No waiting for explanations"
-              color="#E3F2FD"
-            />
-            <FeatureCard
-              emoji="🧠"
-              title="Better Understanding"
-              description="Grasp complex topics faster"
-              color="#F3E5F5"
-            />
-            <FeatureCard
-              emoji="📖"
-              title="Interactive Reading"
-              description="Turn any text into a lesson"
-              color="#E8F5E9"
-            />
-            <FeatureCard
-              emoji="🎓"
-              title="Personalized Learning"
-              description="AI adapts to your level"
-              color="#FFE0E0"
-            />
-          </View>
+          {/* Modern Carousel */}
+          <FeaturesCarousel />
         </View>
 
       </ScrollView>
@@ -238,43 +203,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 32,
-  },
-  cardsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  featureCard: {
-    width: '45%',
-    minWidth: 120,
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  featureEmoji: {
-    fontSize: 32,
-    marginBottom: 12,
-  },
-  featureTitle: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  featureDescription: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 20,
   },
 });
