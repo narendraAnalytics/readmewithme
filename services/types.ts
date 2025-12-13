@@ -32,3 +32,11 @@ export interface Topic {
   color: string;
   description: string;
 }
+
+// Quiz data structure
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  answer: number;
+  explanation: string;
+}

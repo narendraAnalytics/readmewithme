@@ -4,10 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
-import { generateBookContent } from '@/services/gemini';
+import { generateBookContent, generateQuiz } from '@/services/gemini';
+import { QuizQuestion } from '@/services/types';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LANGUAGES, LanguageCode } from '@/constants/languages';
+import { QuizComponent } from '@/components/QuizComponent';
 
 export default function ReadingScreen() {
   const params = useLocalSearchParams();
@@ -22,6 +24,9 @@ export default function ReadingScreen() {
   const [currentLang, setCurrentLang] = useState<LanguageCode>('en');
   const [contentCache, setContentCache] = useState<Record<string, string>>({});
   const [isTranslating, setIsTranslating] = useState(false);
+  const [readingTab, setReadingTab] = useState<'guide' | 'quiz'>('guide');
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [loadingQuiz, setLoadingQuiz] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -56,6 +61,20 @@ export default function ReadingScreen() {
       setContent('Failed to load reading guide. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLoadQuiz = async () => {
+    setLoadingQuiz(true);
+    try {
+      const questions = await generateQuiz(bookTitle, bookAuthor);
+      setQuizQuestions(questions);
+      setReadingTab('quiz');
+    } catch (error) {
+      console.error('Failed to load quiz:', error);
+      alert('Failed to load quiz. Please try again.');
+    } finally {
+      setLoadingQuiz(false);
     }
   };
 
@@ -264,23 +283,54 @@ ${originalText}`;
             ))}
           </ScrollView>
         </View>
+
+        {/* Tab Selector */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tabButton, readingTab === 'guide' && styles.tabButtonActive]}
+            onPress={() => setReadingTab('guide')}>
+            <Text style={[styles.tabText, readingTab === 'guide' && styles.tabTextActive]}>
+              Guide
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabButton, readingTab === 'quiz' && styles.tabButtonActive]}
+            onPress={handleLoadQuiz}
+            disabled={loadingQuiz}>
+            <Text style={[styles.tabText, readingTab === 'quiz' && styles.tabTextActive]}>
+              {loadingQuiz ? 'Loading...' : 'Quiz'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Content */}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}>
-        {(loading || isTranslating) ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#8B5CF6" />
-            <Text style={styles.loadingText}>
-              {isTranslating
-                ? `Translating content.....${LANGUAGES.find(l => l.code === currentLang)?.label || ''}`
-                : 'Preparing your reading guide...'}
-            </Text>
-          </View>
+        {readingTab === 'guide' ? (
+          (loading || isTranslating) ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#8B5CF6" />
+              <Text style={styles.loadingText}>
+                {isTranslating ? 'Translating content...' : 'Preparing your reading guide...'}
+              </Text>
+            </View>
+          ) : (
+            renderContent()
+          )
         ) : (
-          renderContent()
+          loadingQuiz ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#8B5CF6" />
+              <Text style={styles.loadingText}>Generating quiz questions...</Text>
+            </View>
+          ) : quizQuestions.length > 0 ? (
+            <QuizComponent
+              questions={quizQuestions}
+              onComplete={() => setReadingTab('guide')}
+            />
+          ) : null
         )}
       </ScrollView>
     </SafeAreaView>
@@ -433,6 +483,31 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
   },
   languageTextActive: {
+    color: '#8B5CF6',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    marginTop: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 8,
+    padding: 4,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  tabButtonActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  tabTextActive: {
     color: '#8B5CF6',
   },
 });
