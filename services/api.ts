@@ -114,24 +114,24 @@ export const getBooksByTopic = async (topicName: string): Promise<string> => {
 };
 
 /**
- * Search books by custom query
+ * Search for a specific book by name
  */
 export const searchBooks = async (query: string): Promise<string> => {
-  const prompt = `Find 3-5 best books related to: "${query}".
-  IMPORTANT: Prioritize the MOST RECENT publications (from the last 2-3 years if available). Sort these books by publication date in DESCENDING order (newest/most recent books first).
+  const prompt = `I am looking for the specific book: "${query}".
 
-  For each book, provide:
-  - Title
-  - Author
+  Please find this exact book and provide:
+  - Title (exact title of the book)
+  - Author (full author name)
   - Publication year (in YYYY format)
-  - Brief description (2-3 sentences)
+  - Brief description (2-3 sentences about this specific book)
 
   CRITICAL FORMATTING INSTRUCTION:
-  Format each book entry exactly like this:
+  Format the book entry exactly like this:
   ### Title by Author | Year
   Description
 
-  Use Google Search to find the most recent, relevant, and popular books and verify published dates are accurate.`;
+  Use Google Search to find the exact book titled "${query}" and verify all details are accurate.
+  If you cannot find this exact book, find the closest match and explain in the description.`;
 
   const response = await generateBookContent(prompt, true);
   return response.text;
