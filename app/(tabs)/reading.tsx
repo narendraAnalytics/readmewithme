@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ScrollView, Text, View, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, router, Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
+import { useAuth } from '@clerk/clerk-expo';
 import { generateBookContent, generateQuiz } from '@/services/gemini';
 import { QuizQuestion } from '@/services/types';
 import MaskedView from '@react-native-masked-view/masked-view';
@@ -12,6 +13,7 @@ import { LANGUAGES, LanguageCode } from '@/constants/languages';
 import { QuizComponent } from '@/components/QuizComponent';
 
 export default function ReadingScreen() {
+  const { isLoaded, isSignedIn } = useAuth();
   const params = useLocalSearchParams();
   const bookTitle = params.title as string;
   const bookAuthor = params.author as string;
@@ -27,6 +29,21 @@ export default function ReadingScreen() {
   const [readingTab, setReadingTab] = useState<'guide' | 'quiz'>('guide');
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
+
+  // Auth check - show loading while Clerk initializes
+  if (!isLoaded) {
+    return (
+      <View style={styles.authLoadingContainer}>
+        <ActivityIndicator size="large" color="#8B5CF6" />
+        <Text style={styles.authLoadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  // Redirect to sign-in if not authenticated
+  if (!isSignedIn) {
+    return <Redirect href="/(auth)/sign-in" />;
+  }
 
   useEffect(() => {
     setLoading(true);
@@ -341,6 +358,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  authLoadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+  },
+  authLoadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#666',
   },
   header: {
     backgroundColor: '#8B5CF6',

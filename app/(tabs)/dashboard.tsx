@@ -16,7 +16,8 @@ import Animated, {
   withRepeat,
   withSequence
 } from 'react-native-reanimated';
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router';
+import { useAuth, useUser } from '@clerk/clerk-expo';
 import { TopicCard } from '@/components/dashboard/TopicCard';
 import { SearchBar } from '@/components/dashboard/SearchBar';
 import { TOPICS } from '@/constants/dashboard';
@@ -25,6 +26,9 @@ import { getBooksByTopic, searchBooks } from '@/services/api';
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function DashboardScreen() {
+  const { isLoaded, isSignedIn, signOut } = useAuth();
+  const { user } = useUser();
+
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<string>('');
   const [error, setError] = useState<string>('');
@@ -32,6 +36,21 @@ export default function DashboardScreen() {
   // Animation for home icon
   const scale = useSharedValue(1);
   const rotation = useSharedValue(0);
+
+  // Auth check - show loading while Clerk initializes
+  if (!isLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#8B5CF6" />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  // Redirect to sign-in if not authenticated
+  if (!isSignedIn) {
+    return <Redirect href="/(auth)/sign-in" />;
+  }
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -54,6 +73,15 @@ export default function DashboardScreen() {
 
     // Navigate to home
     setTimeout(() => router.push('/'), 300);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.replace('/');
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
   };
 
   const handleTopicSelect = async (topicName: string) => {
@@ -114,17 +142,27 @@ export default function DashboardScreen() {
             <View style={styles.headerTextContainer}>
               <Text style={styles.title}>Discover Books</Text>
               <Text style={styles.subtitle}>
-                Explore topics or search for any book
+                Welcome back, {user?.firstName || 'Reader'}!
               </Text>
             </View>
 
-            {/* Animated Home Icon */}
-            <AnimatedTouchable
-              style={[styles.homeButton, animatedStyle]}
-              onPress={handleHomePress}
-              activeOpacity={0.7}>
-              <Ionicons name="home" size={28} color="#8B5CF6" />
-            </AnimatedTouchable>
+            <View style={styles.headerButtons}>
+              {/* Animated Home Icon */}
+              <AnimatedTouchable
+                style={[styles.homeButton, animatedStyle]}
+                onPress={handleHomePress}
+                activeOpacity={0.7}>
+                <Ionicons name="home" size={28} color="#8B5CF6" />
+              </AnimatedTouchable>
+
+              {/* Sign Out Button */}
+              <TouchableOpacity
+                style={styles.signOutButton}
+                onPress={handleSignOut}
+                activeOpacity={0.7}>
+                <Ionicons name="log-out-outline" size={24} color="#EF4444" />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -200,6 +238,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginLeft: 16,
+  },
   homeButton: {
     width: 56,
     height: 56,
@@ -215,7 +259,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
-    marginLeft: 16,
+  },
+  signOutButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FEE2E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#EF4444',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   topicsSection: {
     paddingHorizontal: 20,

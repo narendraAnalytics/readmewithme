@@ -3,9 +3,29 @@ import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import MaskedView from '@react-native-masked-view/masked-view';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useAuth } from '@clerk/clerk-expo';
+import { useEffect, useState } from 'react';
 import { FeaturesCarousel } from '@/components/landing/FeaturesCarousel';
 
 export default function HomeScreen() {
+  const { isSignedIn, isLoaded } = useAuth();
+  const [hasAutoRedirected, setHasAutoRedirected] = useState(false);
+
+  // Auto-redirect logged-in users to dashboard (one-time only)
+  useEffect(() => {
+    if (isLoaded && isSignedIn && !hasAutoRedirected) {
+      setHasAutoRedirected(true);
+      router.replace('/dashboard');
+    }
+  }, [isLoaded, isSignedIn, hasAutoRedirected]);
+
+  const handleGetStarted = () => {
+    if (isSignedIn) {
+      router.push('/dashboard');
+    } else {
+      router.push('/(auth)/sign-in');
+    }
+  };
   return (
     <LinearGradient
       colors={['#FFE5D9', '#FFF8F3']}
@@ -51,7 +71,8 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => router.push('/dashboard')}
+          onPress={handleGetStarted}
+          disabled={!isLoaded}
           style={styles.buttonContainer}>
           <LinearGradient
             colors={['#8B5CF6', '#EC4899']}
