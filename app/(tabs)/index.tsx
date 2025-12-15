@@ -73,28 +73,32 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        {/* Features Section */}
-        <View style={styles.featuresSection}>
-          <MaskedView
-            maskElement={
-              <Text style={[styles.sectionHeader, styles.gradientText]}>
-                Discover ReadWithME Features
-              </Text>
-            }>
-            <LinearGradient
-              colors={['#8B5CF6', '#EC4899']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.gradientContainer}>
-              <Text style={[styles.sectionHeader, { opacity: 0 }]}>
-                Discover ReadWithME Features
-              </Text>
-            </LinearGradient>
-          </MaskedView>
+        {/* Features Section with New Background */}
+        <LinearGradient
+          colors={['#F5F3FF', '#FFFFFF']}
+          style={styles.featuresSectionBackground}>
+          <View style={styles.featuresSection}>
+            <MaskedView
+              maskElement={
+                <Text style={[styles.sectionHeader, styles.gradientText]}>
+                  Discover ReadWithME Features
+                </Text>
+              }>
+              <LinearGradient
+                colors={['#8B5CF6', '#EC4899']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.gradientContainer}>
+                <Text style={[styles.sectionHeader, { opacity: 0 }]}>
+                  Discover ReadWithME Features
+                </Text>
+              </LinearGradient>
+            </MaskedView>
 
-          {/* Modern Carousel */}
-          <FeaturesCarousel />
-        </View>
+            {/* Modern Carousel */}
+            <FeaturesCarousel />
+          </View>
+        </LinearGradient>
 
       </ScrollView>
     </LinearGradient>
@@ -193,10 +197,14 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
+  featuresSectionBackground: {
+    width: '100%',
+    paddingTop: 40,
+    paddingBottom: 40,
+    marginTop: 20,
+  },
   featuresSection: {
     width: '100%',
-    marginTop: 60,
-    marginBottom: 20,
   },
   sectionHeader: {
     fontSize: 24,
