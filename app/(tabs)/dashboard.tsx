@@ -26,7 +26,7 @@ import { getBooksByTopic, searchBooks } from '@/services/api';
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function DashboardScreen() {
-  const { isLoaded, isSignedIn, signOut } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
 
   const [loading, setLoading] = useState(false);
@@ -73,15 +73,6 @@ export default function DashboardScreen() {
 
     // Navigate to home
     setTimeout(() => router.push('/'), 300);
-  };
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      router.replace('/');
-    } catch (error) {
-      console.error('Sign out error:', error);
-    }
   };
 
   const handleTopicSelect = async (topicName: string) => {
@@ -154,14 +145,6 @@ export default function DashboardScreen() {
                 activeOpacity={0.7}>
                 <Ionicons name="home" size={28} color="#8B5CF6" />
               </AnimatedTouchable>
-
-              {/* Sign Out Button */}
-              <TouchableOpacity
-                style={styles.signOutButton}
-                onPress={handleSignOut}
-                activeOpacity={0.7}>
-                <Ionicons name="log-out-outline" size={24} color="#EF4444" />
-              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -252,22 +235,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#8B5CF6',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  signOutButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FEE2E2',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#EF4444',
     shadowOffset: {
       width: 0,
       height: 4,

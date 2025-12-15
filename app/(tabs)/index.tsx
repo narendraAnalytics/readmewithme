@@ -3,21 +3,12 @@ import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import MaskedView from '@react-native-masked-view/masked-view';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useAuth } from '@clerk/clerk-expo';
-import { useEffect, useState } from 'react';
+import { useAuth, useUser } from '@clerk/clerk-expo';
 import { FeaturesCarousel } from '@/components/landing/FeaturesCarousel';
 
 export default function HomeScreen() {
-  const { isSignedIn, isLoaded } = useAuth();
-  const [hasAutoRedirected, setHasAutoRedirected] = useState(false);
-
-  // Auto-redirect logged-in users to dashboard (one-time only)
-  useEffect(() => {
-    if (isLoaded && isSignedIn && !hasAutoRedirected) {
-      setHasAutoRedirected(true);
-      router.replace('/dashboard');
-    }
-  }, [isLoaded, isSignedIn, hasAutoRedirected]);
+  const { isSignedIn, isLoaded, signOut } = useAuth();
+  const { user } = useUser();
 
   const handleGetStarted = () => {
     if (isSignedIn) {
@@ -26,6 +17,15 @@ export default function HomeScreen() {
       router.push('/(auth)/sign-in');
     }
   };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
+
   return (
     <LinearGradient
       colors={['#FFE5D9', '#FFF8F3']}
@@ -81,10 +81,27 @@ export default function HomeScreen() {
             style={styles.button}>
             <View style={styles.buttonContent}>
               <Ionicons name="book-outline" size={20} color="#FFFFFF" />
-              <Text style={styles.buttonText}>Get Started</Text>
+              <Text style={styles.buttonText}>
+                {isSignedIn && user?.username
+                  ? `Welcome ${user.username}`
+                  : 'Get Started'}
+              </Text>
             </View>
           </LinearGradient>
         </TouchableOpacity>
+
+        {/* Sign-Out Button - Only show when logged in */}
+        {isSignedIn && (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={handleSignOut}
+            style={styles.signOutButtonContainer}>
+            <View style={styles.signOutButton}>
+              <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+              <Text style={styles.signOutButtonText}>Sign Out</Text>
+            </View>
+          </TouchableOpacity>
+        )}
 
         <View style={styles.descriptionContainer}>
           <Text style={styles.description}>
@@ -232,5 +249,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 32,
+  },
+  signOutButtonContainer: {
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  signOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  signOutButtonText: {
+    color: '#EF4444',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
