@@ -1,0 +1,149 @@
+Below is the **exact, minimal, copy-paste–safe code setup** to **create and install an Expo Dev Client** for your **ReadWithMe** project.
+Follow in order. Do not skip steps.
+
+---
+
+## 1️⃣ Install required Expo Dev Client packages
+
+From your **ReadWithMe project root**:
+
+```bash
+npx expo install expo-dev-client
+```
+
+(This ensures native support for deep links + OAuth.)
+
+---
+
+## 2️⃣ Set the app scheme (CRITICAL)
+
+### `app.json` or `app.config.js`
+
+```json
+{
+  "expo": {
+    "name": "ReadWithMe",
+    "slug": "readwithme",
+    "scheme": "readwithme",
+    "android": {
+      "package": "com.readwithme.app"
+    }
+  }
+}
+```
+
+This enables:
+
+```
+readwithme://oauth-native-callback
+```
+
+⚠️ The `scheme` **must exactly match** what you added in Clerk.
+
+---
+
+## 3️⃣ Login to Expo (once)
+
+```bash
+npx expo login
+```
+
+---
+
+## 4️⃣ Create the Expo Dev Client build (Android – recommended)
+
+```bash
+npx expo run:android
+```
+
+OR (cloud build – easiest, no Android Studio needed):
+
+```bash
+npx expo prebuild
+npx expo build:android -t development
+```
+
+👉 **Use this if you don’t want Android Studio locally**
+
+---
+
+## 5️⃣ Install the Dev Client on your phone
+
+After the build finishes:
+
+* Expo shows a **QR code**
+* Open it on your phone
+* Install **ReadWithMe** (APK)
+
+You will now see:
+
+* ❌ Expo Go (ignore)
+* ✅ ReadWithMe (Dev Client)
+
+---
+
+## 6️⃣ Start the app (Dev Client mode)
+
+Run:
+
+```bash
+npx expo start --dev-client
+```
+
+Then:
+
+* Open **ReadWithMe** on your phone
+* App connects to Metro
+* Live reload works
+
+---
+
+## 7️⃣ Verify Google OAuth now works
+
+Click:
+
+> Continue with Google
+
+Expected flow:
+
+```
+ReadWithMe → Google → Clerk → readwithme://oauth-native-callback → ReadWithMe
+```
+
+✅ Redirect works
+✅ User logged in
+✅ Issue resolved
+
+---
+
+## 🔍 Common mistakes (avoid these)
+
+* ❌ Opening Expo Go instead of ReadWithMe
+* ❌ Missing `scheme`
+* ❌ Scheme mismatch in Clerk
+* ❌ Testing OAuth before Dev Client install
+
+---
+
+## ✅ Final confirmation checklist
+
+✔ `expo-dev-client` installed
+✔ `scheme: "readwithme"` added
+✔ Dev Client installed on phone
+✔ Running with `--dev-client`
+✔ Testing inside **ReadWithMe app**
+
+---
+
+### One-line takeaway
+
+> **Google login will NOT work until you run your app inside an Expo Dev Client — and now you have the exact code to do it.**
+
+If you want next:
+
+* Clerk Google OAuth **code example**
+* Production build commands
+* How to debug OAuth failures
+
+Tell me.
+

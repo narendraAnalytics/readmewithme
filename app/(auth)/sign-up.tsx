@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,11 +14,35 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSignUp } from '@clerk/clerk-expo';
+import { useSSO } from '@clerk/clerk-expo';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import SocialAuthButton from '@/components/SocialAuthButton';
+import AuthDivider from '@/components/AuthDivider';
+
+// Browser warming for OAuth performance
+WebBrowser.maybeCompleteAuthSession();
+
+// Custom hook for browser warming
+const useWarmUpBrowser = () => {
+  useEffect(() => {
+    void WebBrowser.warmUpAsync();
+    return () => {
+      void WebBrowser.coolDownAsync();
+    };
+  }, []);
+};
 
 export default function SignUpScreen() {
   const { signUp, setActive, isLoaded } = useSignUp();
+
+  // Browser warming
+  useWarmUpBrowser();
+
+  // Mobile OAuth hook using useSSO()
+  const { startSSOFlow } = useSSO();
 
   const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
@@ -28,6 +52,57 @@ export default function SignUpScreen() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [pendingVerification, setPendingVerification] = useState(false);
+
+  // OAuth loading states
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [githubLoading, setGithubLoading] = useState(false);
+  const [linkedinLoading, setLinkedinLoading] = useState(false);
+
+  // Mobile OAuth handler - manually triggers OAuth flow
+  const onOAuthPress = useCallback(async (
+    provider: 'google' | 'github' | 'linkedin',
+    setLoadingState: (val: boolean) => void
+  ) => {
+    setLoadingState(true);
+    setError('');
+
+    try {
+      // Trigger OAuth flow with redirect URL
+      const { createdSessionId, setActive: oauthSetActive, signIn, signUp: oauthSignUp } =
+        await startSSOFlow({
+          strategy: `oauth_${provider}`,
+          redirectUrl: Linking.createURL('/oauth-native-callback', { scheme: 'readwithme' })
+        });
+
+      // If session created, set it as active
+      if (createdSessionId && oauthSetActive) {
+        await oauthSetActive({ session: createdSessionId });
+        router.replace('/');
+      } else {
+        // Handle edge cases
+        if (oauthSignUp?.verifications?.externalAccount?.status === 'transferable') {
+          setError('Email already registered. Please sign in instead.');
+        } else {
+          setError('Authentication cancelled');
+        }
+      }
+    } catch (err: any) {
+      console.error(`${provider} OAuth error:`, JSON.stringify(err, null, 2));
+
+      // Map error codes to user-friendly messages
+      const errorCode = err.errors?.[0]?.code;
+      const errorMessages: Record<string, string> = {
+        'oauth_access_denied': 'Access denied. Please try again.',
+        'email_address_already_exists': 'Account exists with this email.',
+        'oauth_callback_missing': 'OAuth not configured. Check redirect URL.',
+        'session_exists': 'You are already signed in.',
+      };
+
+      setError(errorMessages[errorCode] || `Failed to sign up with ${provider}`);
+    } finally {
+      setLoadingState(false);
+    }
+  }, [startSSOFlow]);
 
   const onSignUpPress = async () => {
     if (!isLoaded) return;
@@ -143,6 +218,29 @@ export default function SignUpScreen() {
 
             {!pendingVerification ? (
               <>
+                {/* Social Auth Buttons */}
+                <SocialAuthButton
+                  provider="oauth_google"
+                  onPress={() => onOAuthPress('google', setGoogleLoading)}
+                  loading={googleLoading}
+                  disabled={loading || githubLoading || linkedinLoading}
+                />
+                <SocialAuthButton
+                  provider="oauth_github"
+                  onPress={() => onOAuthPress('github', setGithubLoading)}
+                  loading={githubLoading}
+                  disabled={loading || googleLoading || linkedinLoading}
+                />
+                <SocialAuthButton
+                  provider="oauth_linkedin"
+                  onPress={() => onOAuthPress('linkedin', setLinkedinLoading)}
+                  loading={linkedinLoading}
+                  disabled={loading || googleLoading || githubLoading}
+                />
+
+                {/* Divider */}
+                <AuthDivider />
+
                 {/* Username Input */}
                 <View style={styles.inputContainer}>
                   <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
@@ -153,7 +251,7 @@ export default function SignUpScreen() {
                     value={username}
                     onChangeText={setUsername}
                     autoCapitalize="none"
-                    editable={!loading}
+                    editable={!loading && !googleLoading && !githubLoading && !linkedinLoading}
                   />
                 </View>
 
@@ -168,7 +266,7 @@ export default function SignUpScreen() {
                     onChangeText={setEmailAddress}
                     autoCapitalize="none"
                     keyboardType="email-address"
-                    editable={!loading}
+                    editable={!loading && !googleLoading && !githubLoading && !linkedinLoading}
                   />
                 </View>
 
@@ -183,7 +281,7 @@ export default function SignUpScreen() {
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
-                    editable={!loading}
+                    editable={!loading && !googleLoading && !githubLoading && !linkedinLoading}
                   />
                   <TouchableOpacity
                     onPress={() => setShowPassword(!showPassword)}

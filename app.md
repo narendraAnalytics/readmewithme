@@ -2567,6 +2567,7 @@ Implemented multi-language translation feature for the reading view, allowing us
 **File:** `constants/languages.ts` (NEW)
 
 **Languages Supported:**
+
 - English (English)
 - Telugu (తెలుగు)
 - Hindi (हिन्दी)
@@ -2574,6 +2575,7 @@ Implemented multi-language translation feature for the reading view, allowing us
 - Marathi (मराठी)
 
 **Type Definition:**
+
 ```typescript
 export type LanguageCode = 'en' | 'te' | 'hi' | 'ta' | 'mr';
 ```
@@ -2849,6 +2851,7 @@ User clicks Hindi again later:
 ### Translation Quality
 
 **AI Prompt Ensures:**
+
 - Maintains all markdown formatting (##, ###, **, *)
 - Full translation (no content shortening)
 - Natural language output
@@ -2856,6 +2859,7 @@ User clicks Hindi again later:
 - Preserves technical terms correctly
 
 **Example Translation:**
+
 ```
 English:
 ## Synopsis
@@ -2908,6 +2912,7 @@ export const LANGUAGES = [
 - Line 296: Updated loading text to show "Translating content..." during language switches
 
 **Benefits:**
+
 - All 5 languages visible without horizontal scrolling
 - Cleaner, more compact UI
 - Better mobile experience
@@ -2935,6 +2940,7 @@ Complete React Native quiz component with:
 - **Score Screen:** Final results with percentage and "Back to Reading" button
 
 **Key Features:**
+
 ```typescript
 interface QuizComponentProps {
   questions: QuizQuestion[];
@@ -2995,6 +3001,7 @@ Return ONLY a valid JSON array with no markdown formatting.`;
 ```
 
 **Key Implementation Details:**
+
 - Uses Gemini API with `jsonMode: true` for structured data
 - Google Search enabled for accurate quiz questions
 - Cleans markdown formatting from AI response
@@ -3006,6 +3013,7 @@ Return ONLY a valid JSON array with no markdown formatting.`;
 Added quiz integration with tab navigation:
 
 **Imports Added (lines 7-12):**
+
 ```typescript
 import { generateBookContent, generateQuiz } from '@/services/gemini';
 import { QuizQuestion } from '@/services/types';
@@ -3013,6 +3021,7 @@ import { QuizComponent } from '@/components/QuizComponent';
 ```
 
 **State Variables Added (lines 27-29):**
+
 ```typescript
 const [readingTab, setReadingTab] = useState<'guide' | 'quiz'>('guide');
 const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
@@ -3020,6 +3029,7 @@ const [loadingQuiz, setLoadingQuiz] = useState(false);
 ```
 
 **Quiz Generation Function (lines 67-79):**
+
 ```typescript
 const handleLoadQuiz = async () => {
   setLoadingQuiz(true);
@@ -3037,6 +3047,7 @@ const handleLoadQuiz = async () => {
 ```
 
 **Tab Selector UI (lines 287-304):**
+
 ```typescript
 {/* Tab Selector */}
 <View style={styles.tabContainer}>
@@ -3059,6 +3070,7 @@ const handleLoadQuiz = async () => {
 ```
 
 **Conditional Content Rendering (lines 311-334):**
+
 ```typescript
 {readingTab === 'guide' ? (
   (loading || isTranslating) ? (
@@ -3087,6 +3099,7 @@ const handleLoadQuiz = async () => {
 ```
 
 **Tab Styles Added (lines 488-513):**
+
 ```typescript
 tabContainer: {
   flexDirection: 'row',
@@ -3120,6 +3133,7 @@ tabTextActive: {
 ### Features Implemented
 
 #### Quiz Functionality
+
 ✅ **5 AI-Generated Questions:** Each quiz contains exactly 5 multiple-choice questions about the selected book
 ✅ **Progress Tracking:** Visual progress bar and "QUESTION X OF 5" counter
 ✅ **Real-Time Validation:** Immediate feedback when user selects an answer
@@ -3131,6 +3145,7 @@ tabTextActive: {
 ✅ **Error Handling:** User-friendly alerts if quiz generation fails
 
 #### UI/UX Enhancements
+
 ✅ **Tab Navigation:** Clean toggle between "Guide" and "Quiz" tabs
 ✅ **Consistent Styling:** Purple theme (#8B5CF6) matching app design
 ✅ **Responsive Layout:** Works on all screen sizes
@@ -3192,6 +3207,7 @@ tabTextActive: {
 #### Quiz Generation Process
 
 **AI Prompt Structure:**
+
 ```
 Create a 5-question multiple choice quiz about the book "[Title]" by "[Author]".
 
@@ -3205,6 +3221,7 @@ Return ONLY a valid JSON array with no markdown formatting.
 ```
 
 **Response Processing:**
+
 1. Call Gemini API with `jsonMode: true` for structured output
 2. Enable Google Search for accurate book information
 3. Clean response by removing markdown code blocks (```json)
@@ -3213,6 +3230,7 @@ Return ONLY a valid JSON array with no markdown formatting.
 6. Handle parsing errors with try/catch
 
 **Example Quiz Question:**
+
 ```json
 {
   "question": "What is the main theme of the book?",
@@ -3230,6 +3248,7 @@ Return ONLY a valid JSON array with no markdown formatting.
 #### State Management
 
 **Quiz State Variables:**
+
 - `readingTab`: 'guide' | 'quiz' - Controls which tab is active
 - `quizQuestions`: QuizQuestion[] - Stores generated quiz questions
 - `loadingQuiz`: boolean - Loading state during generation
@@ -3240,6 +3259,7 @@ Return ONLY a valid JSON array with no markdown formatting.
 - `quizComplete`: boolean - Whether quiz is finished
 
 **Flow Control:**
+
 1. User clicks Quiz tab → `handleLoadQuiz()` called
 2. `setLoadingQuiz(true)` → Loading spinner shows
 3. `generateQuiz()` fetches questions from AI
@@ -3252,6 +3272,7 @@ Return ONLY a valid JSON array with no markdown formatting.
 #### Color Scheme
 
 **Quiz UI Colors:**
+
 | Element | Color | Usage |
 |---------|-------|-------|
 | Progress Bar Fill | #8B5CF6 | Purple progress indicator |
@@ -3271,24 +3292,28 @@ Return ONLY a valid JSON array with no markdown formatting.
 ### Code Quality & Architecture
 
 #### TypeScript Type Safety
+
 ✅ **Full Type Coverage:** All functions and components properly typed
 ✅ **Interface Definitions:** QuizQuestion interface ensures data structure
 ✅ **Type Guards:** Proper null checks and optional chaining
 ✅ **Props Interfaces:** QuizComponentProps clearly defines expected props
 
 #### Component Architecture
+
 ✅ **Separation of Concerns:** Quiz logic isolated in QuizComponent
 ✅ **Reusability:** QuizComponent can be reused in other contexts
 ✅ **Single Responsibility:** Each function has one clear purpose
 ✅ **Clean State Management:** React hooks used properly
 
 #### Error Handling
+
 ✅ **API Errors:** Try/catch blocks for Gemini API calls
 ✅ **JSON Parsing:** Error handling for malformed responses
 ✅ **User Feedback:** Alert messages for failures
 ✅ **Graceful Degradation:** App continues working if quiz fails
 
 #### Performance
+
 ✅ **Efficient Rendering:** Only re-renders necessary components
 ✅ **No Memory Leaks:** Proper cleanup of state
 ✅ **Fast Transitions:** Smooth animations between questions
@@ -3299,6 +3324,7 @@ Return ONLY a valid JSON array with no markdown formatting.
 ### Testing Checklist
 
 **Language Selector:**
+
 - [x] All 5 language symbols visible without scrolling
 - [x] Symbols display correctly: E, తె, हि, த, म
 - [x] Active language highlighted properly
@@ -3306,6 +3332,7 @@ Return ONLY a valid JSON array with no markdown formatting.
 - [x] Loading state prevents multiple clicks
 
 **Quiz Feature:**
+
 - [x] "Quiz" tab appears in reading view header
 - [x] Clicking Quiz tab generates 5 questions
 - [x] Loading shows "Generating quiz questions..."
@@ -3324,6 +3351,7 @@ Return ONLY a valid JSON array with no markdown formatting.
 - [x] Loading states prevent double-clicks
 
 **Integration:**
+
 - [x] Quiz works with all translated languages
 - [x] Tab switching doesn't break translation cache
 - [x] All existing features remain functional
@@ -3338,6 +3366,7 @@ Return ONLY a valid JSON array with no markdown formatting.
 **No New Dependencies Required!**
 
 All features implemented using existing dependencies:
+
 - `@google/genai` - AI quiz generation (already installed)
 - `react-native` - UI components (ScrollView, Text, TouchableOpacity, etc.)
 - `react` - State management hooks (useState)
@@ -3350,17 +3379,20 @@ All features implemented using existing dependencies:
 ### Performance Metrics
 
 **Quiz Generation:**
+
 - First load: 2-10 seconds (AI generation time)
 - Subsequent loads: Same (new questions each time)
 - JSON parsing: < 10ms
 - UI rendering: 60fps
 
 **Memory Usage:**
+
 - Quiz component: ~2-5MB
 - 5 questions with explanations: ~10-20KB
 - Total overhead: Negligible
 
 **User Experience:**
+
 - Tab switching: < 100ms (instant)
 - Question progression: < 50ms (smooth)
 - Answer feedback: Immediate (< 16ms)
@@ -3371,6 +3403,7 @@ All features implemented using existing dependencies:
 ### Future Enhancements (Optional)
 
 **Quiz Improvements:**
+
 - [ ] Difficulty levels (Easy, Medium, Hard)
 - [ ] Question categories (Plot, Characters, Themes, etc.)
 - [ ] Timed quiz mode with countdown
@@ -3382,6 +3415,7 @@ All features implemented using existing dependencies:
 - [ ] Quiz performance analytics
 
 **Reading Experience:**
+
 - [ ] Bookmarks for specific quiz questions
 - [ ] Export quiz results as PDF
 - [ ] Voice-over for quiz questions
@@ -3394,6 +3428,7 @@ All features implemented using existing dependencies:
 ### Summary of Session 6
 
 **Completed Tasks:**
+
 1. ✅ Enhanced language selector with compact symbols
 2. ✅ Fixed translation loading feedback
 3. ✅ Implemented complete quiz feature with 5 questions
@@ -3406,15 +3441,18 @@ All features implemented using existing dependencies:
 10. ✅ Tested all features thoroughly
 
 **Files Created:**
+
 - `components/QuizComponent.tsx` (255 lines)
 
 **Files Modified:**
+
 - `constants/languages.ts` - Added symbol field
 - `services/types.ts` - Added QuizQuestion interface
 - `services/gemini.ts` - Added generateQuiz function
 - `app/(tabs)/reading.tsx` - Added quiz integration and tab UI
 
 **Impact:**
+
 - Enhanced mobile UX with compact language selector
 - Added interactive learning through quizzes
 - Improved user engagement with book content
@@ -3426,3 +3464,18 @@ All features implemented using existing dependencies:
 **Last Updated:** Session 6 (Quiz Feature & Language Selector Improvements)
 **Status:** Production Ready with Interactive Quiz
 **Languages:** English, Telugu, Hindi, Tamil, Marathi (with compact symbols)
+
+ Now you can test the sign-out flow:
+
+  1. Sign in to the app
+  2. Landing page should show "Welcome {username}"
+  3. "Sign Out" button should appear below it
+  4. Click "Sign Out"
+  5. You might see a brief loading screen (if the transition is slow enough to be visible)
+  6. Button should change to "Get Started"
+  7. "Sign Out" button should disappear
+  8. No more React hooks error!
+
+I can see the issue - the Google OAuth consent screen appears, but after clicking "Continue", the app doesn't redirect back properly.
+  This is a different issue from the syntax error we just fixed. Let me investigate the OAuth callback flow and deep linking
+  configuration.

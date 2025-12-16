@@ -37,6 +37,14 @@ export default function DashboardScreen() {
   const scale = useSharedValue(1);
   const rotation = useSharedValue(0);
 
+  // FIXED: Declare animated style BEFORE any early returns to avoid hooks violation
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: scale.value },
+      { rotate: `${rotation.value}deg` }
+    ],
+  }));
+
   // Auth check - show loading while Clerk initializes
   if (!isLoaded) {
     return (
@@ -51,13 +59,6 @@ export default function DashboardScreen() {
   if (!isSignedIn) {
     return <Redirect href="/(auth)/sign-in" />;
   }
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: scale.value },
-      { rotate: `${rotation.value}deg` }
-    ],
-  }));
 
   const handleHomePress = () => {
     // Animate on press
