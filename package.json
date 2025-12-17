@@ -14,10 +14,12 @@
     "@clerk/clerk-expo": "^2.19.11",
     "@expo/vector-icons": "^15.0.3",
     "@google/genai": "^1.33.0",
+    "@neondatabase/serverless": "^1.0.2",
     "@react-native-masked-view/masked-view": "0.3.2",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
+    "drizzle-orm": "^0.45.1",
     "expo": "~54.0.28",
     "expo-constants": "~18.0.11",
     "expo-dev-client": "~6.0.20",
@@ -46,6 +48,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "drizzle-kit": "^0.31.8",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
     "typescript": "~5.9.2"
