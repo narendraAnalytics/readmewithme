@@ -1,26 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import AuthDivider from '@/components/AuthDivider';
+import SocialAuthButton from '@/components/SocialAuthButton';
+import { useSignUp, useSSO } from '@clerk/clerk-expo';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Linking from 'expo-linking';
+import { router } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useSignUp } from '@clerk/clerk-expo';
-import { useSSO } from '@clerk/clerk-expo';
-import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
-import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import SocialAuthButton from '@/components/SocialAuthButton';
-import AuthDivider from '@/components/AuthDivider';
 
 // Browser warming for OAuth performance
 WebBrowser.maybeCompleteAuthSession();
@@ -181,6 +180,18 @@ export default function SignUpScreen() {
       colors={['#FFE5D9', '#FFF8F3']}
       style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
+        {/* Header with Back Button */}
+        <View style={styles.headerContainer}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.headerBackButton}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="arrow-back" size={24} color="#2c3e50" />
+            <Text style={styles.headerBackText}>Back</Text>
+          </TouchableOpacity>
+        </View>
+
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardView}>
@@ -387,6 +398,25 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  headerContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 10,
+    paddingBottom: 0,
+    zIndex: 10,
+  },
+  headerBackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    padding: 8,
+    marginLeft: -8, // compensate for padding
+    gap: 4,
+  },
+  headerBackText: {
+    fontSize: 16,
+    color: '#2c3e50',
+    fontWeight: '500',
   },
   keyboardView: {
     flex: 1,
