@@ -12,13 +12,22 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
+import Animated, {
+  Extrapolate,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Custom hook for browser warming
@@ -48,12 +57,47 @@ export default function SignInScreen() {
   const [pendingEmailCode, setPendingEmailCode] = useState(false);
   const [emailCode, setEmailCode] = useState('');
 
-  // OAuth loading states
+  // SSO loading states
   const [googleLoading, setGoogleLoading] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
   const [linkedinLoading, setLinkedinLoading] = useState(false);
 
-  // Mobile OAuth handler - manually triggers OAuth flow
+  // Animated Arrow Logic
+  const translateY = useSharedValue(0);
+  const scrollY = useSharedValue(0);
+
+  useEffect(() => {
+    translateY.value = withRepeat(
+      withSequence(
+        withTiming(-10, { duration: 1000 }),
+        withTiming(0, { duration: 1000 })
+      ),
+      -1,
+      true
+    );
+  }, []);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  const animatedArrowStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      scrollY.value,
+      [0, 50], // Start fading after 0px, invisible by 50px
+      [1, 0],
+      Extrapolate.CLAMP
+    );
+
+    return {
+      transform: [{ translateY: translateY.value }],
+      opacity,
+    };
+  });
+
+  // Mobile SSO handler - manually triggers SSO flow
   const onOAuthPress = useCallback(async (
     provider: 'google' | 'github' | 'linkedin',
     setLoadingState: (val: boolean) => void
@@ -222,7 +266,9 @@ export default function SignInScreen() {
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardView}>
-          <ScrollView
+          <Animated.ScrollView
+            onScroll={scrollHandler}
+            scrollEventThrottle={16}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled">
@@ -410,8 +456,15 @@ export default function SignInScreen() {
                 </View>
               )}
             </View>
-          </ScrollView>
+          </Animated.ScrollView>
         </KeyboardAvoidingView>
+
+        {/* Animated Scroll Indicator */}
+        {!pendingEmailCode && (
+          <Animated.View style={[styles.scrollIndicator, animatedArrowStyle]}>
+            <Ionicons name="chevron-down" size={30} color="#8B5CF6" />
+          </Animated.View>
+        )}
       </SafeAreaView>
     </LinearGradient>
   );
@@ -591,5 +644,21 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#8B5CF6',
     fontWeight: '600',
+  },
+  scrollIndicator: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    backgroundColor: '#FFFFFF',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
   },
 });
