@@ -200,191 +200,203 @@ export default function SignUpScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled">
 
-            {/* Logo */}
-            <View style={styles.logoContainer}>
+            {/* Banner Image */}
+            <View style={styles.bannerContainer}>
               <Image
-                source={require('@/public/images/logo.png')}
-                style={styles.logo}
+                source={require('@/public/images/bannerimage2.png')}
+                style={styles.banner}
                 resizeMode="contain"
               />
             </View>
 
-            {/* Title */}
-            <Text style={styles.title}>
-              {pendingVerification ? 'Verify Email' : 'Create Account'}
-            </Text>
-            <Text style={styles.subtitle}>
-              {pendingVerification
-                ? 'Enter the code sent to your email'
-                : 'Join ReadWithME to start your journey'}
-            </Text>
-
-            {/* Error Message */}
-            {error ? (
-              <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle" size={20} color="#DC2626" />
-                <Text style={styles.errorText}>{error}</Text>
+            {/* Form Content */}
+            <View style={styles.formContainer}>
+              {/* Logo */}
+              <View style={styles.logoContainer}>
+                <Image
+                  source={require('@/public/images/logo.png')}
+                  style={styles.logo}
+                  resizeMode="contain"
+                />
               </View>
-            ) : null}
 
-            {!pendingVerification ? (
-              <>
-                {/* Social Auth Buttons */}
-                <SocialAuthButton
-                  provider="oauth_google"
-                  onPress={() => onOAuthPress('google', setGoogleLoading)}
-                  loading={googleLoading}
-                  disabled={loading || githubLoading || linkedinLoading}
-                />
-                <SocialAuthButton
-                  provider="oauth_github"
-                  onPress={() => onOAuthPress('github', setGithubLoading)}
-                  loading={githubLoading}
-                  disabled={loading || googleLoading || linkedinLoading}
-                />
-                <SocialAuthButton
-                  provider="oauth_linkedin"
-                  onPress={() => onOAuthPress('linkedin', setLinkedinLoading)}
-                  loading={linkedinLoading}
-                  disabled={loading || googleLoading || githubLoading}
-                />
+              {/* Title */}
+              <Text style={styles.title}>
+                {pendingVerification ? 'Verify Email' : 'Create Account'}
+              </Text>
+              <Text style={styles.subtitle}>
+                {pendingVerification
+                  ? 'Enter the code sent to your email'
+                  : 'Join ReadWithME to start your journey'}
+              </Text>
 
-                {/* Divider */}
-                <AuthDivider />
-
-                {/* Username Input */}
-                <View style={styles.inputContainer}>
-                  <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Username"
-                    placeholderTextColor="#999"
-                    value={username}
-                    onChangeText={setUsername}
-                    autoCapitalize="none"
-                    editable={!loading && !googleLoading && !githubLoading && !linkedinLoading}
-                  />
+              {/* Error Message */}
+              {error ? (
+                <View style={styles.errorContainer}>
+                  <Ionicons name="alert-circle" size={20} color="#DC2626" />
+                  <Text style={styles.errorText}>{error}</Text>
                 </View>
+              ) : null}
 
-                {/* Email Input */}
-                <View style={styles.inputContainer}>
-                  <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Email address"
-                    placeholderTextColor="#999"
-                    value={emailAddress}
-                    onChangeText={setEmailAddress}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    editable={!loading && !googleLoading && !githubLoading && !linkedinLoading}
+              {!pendingVerification ? (
+                <>
+                  {/* Social Auth Buttons */}
+                  <SocialAuthButton
+                    provider="oauth_google"
+                    onPress={() => onOAuthPress('google', setGoogleLoading)}
+                    loading={googleLoading}
+                    disabled={loading || githubLoading || linkedinLoading}
                   />
-                </View>
+                  <SocialAuthButton
+                    provider="oauth_github"
+                    onPress={() => onOAuthPress('github', setGithubLoading)}
+                    loading={githubLoading}
+                    disabled={loading || googleLoading || linkedinLoading}
+                  />
+                  <SocialAuthButton
+                    provider="oauth_linkedin"
+                    onPress={() => onOAuthPress('linkedin', setLinkedinLoading)}
+                    loading={linkedinLoading}
+                    disabled={loading || googleLoading || githubLoading}
+                  />
 
-                {/* Password Input */}
-                <View style={styles.inputContainer}>
-                  <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Password (min. 8 characters)"
-                    placeholderTextColor="#999"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    editable={!loading && !googleLoading && !githubLoading && !linkedinLoading}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                    style={styles.eyeIcon}>
-                    <Ionicons
-                      name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                      size={20}
-                      color="#666"
+                  {/* Divider */}
+                  <AuthDivider />
+
+                  {/* Username Input */}
+                  <View style={styles.inputContainer}>
+                    <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Username"
+                      placeholderTextColor="#999"
+                      value={username}
+                      onChangeText={setUsername}
+                      autoCapitalize="none"
+                      editable={!loading && !googleLoading && !githubLoading && !linkedinLoading}
                     />
+                  </View>
+
+                  {/* Email Input */}
+                  <View style={styles.inputContainer}>
+                    <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Email address"
+                      placeholderTextColor="#999"
+                      value={emailAddress}
+                      onChangeText={setEmailAddress}
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                      editable={!loading && !googleLoading && !githubLoading && !linkedinLoading}
+                    />
+                  </View>
+
+                  {/* Password Input */}
+                  <View style={styles.inputContainer}>
+                    <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Password (min. 8 characters)"
+                      placeholderTextColor="#999"
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                      editable={!loading && !googleLoading && !githubLoading && !linkedinLoading}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                      style={styles.eyeIcon}>
+                      <Ionicons
+                        name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                        size={20}
+                        color="#666"
+                      />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Sign Up Button */}
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={onSignUpPress}
+                    disabled={loading}
+                    style={styles.buttonContainer}>
+                    <LinearGradient
+                      colors={['#8B5CF6', '#EC4899']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.button}>
+                      {loading ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <View style={styles.buttonContent}>
+                          <Ionicons name="person-add-outline" size={20} color="#FFFFFF" />
+                          <Text style={styles.buttonText}>Create Account</Text>
+                        </View>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  {/* Verification Code Input */}
+                  <View style={styles.inputContainer}>
+                    <Ionicons name="shield-checkmark-outline" size={20} color="#666" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Verification code"
+                      placeholderTextColor="#999"
+                      value={verificationCode}
+                      onChangeText={setVerificationCode}
+                      keyboardType="number-pad"
+                      autoCapitalize="none"
+                      editable={!loading}
+                    />
+                  </View>
+
+                  {/* Verify Button */}
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={onVerifyPress}
+                    disabled={loading}
+                    style={styles.buttonContainer}>
+                    <LinearGradient
+                      colors={['#8B5CF6', '#EC4899']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.button}>
+                      {loading ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <View style={styles.buttonContent}>
+                          <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
+                          <Text style={styles.buttonText}>Verify Email</Text>
+                        </View>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  {/* Back to Sign Up */}
+                  <TouchableOpacity
+                    onPress={() => setPendingVerification(false)}
+                    style={styles.backButton}>
+                    <Ionicons name="arrow-back" size={16} color="#8B5CF6" />
+                    <Text style={styles.backText}>Back to sign up</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+
+              {/* Sign In Link */}
+              {!pendingVerification && (
+                <View style={styles.footer}>
+                  <Text style={styles.footerText}>Already have an account? </Text>
+                  <TouchableOpacity onPress={() => router.push('/(auth)/sign-in')}>
+                    <Text style={styles.linkText}>Sign In</Text>
                   </TouchableOpacity>
                 </View>
-
-                {/* Sign Up Button */}
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={onSignUpPress}
-                  disabled={loading}
-                  style={styles.buttonContainer}>
-                  <LinearGradient
-                    colors={['#8B5CF6', '#EC4899']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.button}>
-                    {loading ? (
-                      <ActivityIndicator size="small" color="#FFFFFF" />
-                    ) : (
-                      <View style={styles.buttonContent}>
-                        <Ionicons name="person-add-outline" size={20} color="#FFFFFF" />
-                        <Text style={styles.buttonText}>Create Account</Text>
-                      </View>
-                    )}
-                  </LinearGradient>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                {/* Verification Code Input */}
-                <View style={styles.inputContainer}>
-                  <Ionicons name="shield-checkmark-outline" size={20} color="#666" style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Verification code"
-                    placeholderTextColor="#999"
-                    value={verificationCode}
-                    onChangeText={setVerificationCode}
-                    keyboardType="number-pad"
-                    autoCapitalize="none"
-                    editable={!loading}
-                  />
-                </View>
-
-                {/* Verify Button */}
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={onVerifyPress}
-                  disabled={loading}
-                  style={styles.buttonContainer}>
-                  <LinearGradient
-                    colors={['#8B5CF6', '#EC4899']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.button}>
-                    {loading ? (
-                      <ActivityIndicator size="small" color="#FFFFFF" />
-                    ) : (
-                      <View style={styles.buttonContent}>
-                        <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
-                        <Text style={styles.buttonText}>Verify Email</Text>
-                      </View>
-                    )}
-                  </LinearGradient>
-                </TouchableOpacity>
-
-                {/* Back to Sign Up */}
-                <TouchableOpacity
-                  onPress={() => setPendingVerification(false)}
-                  style={styles.backButton}>
-                  <Ionicons name="arrow-back" size={16} color="#8B5CF6" />
-                  <Text style={styles.backText}>Back to sign up</Text>
-                </TouchableOpacity>
-              </>
-            )}
-
-            {/* Sign In Link */}
-            {!pendingVerification && (
-              <View style={styles.footer}>
-                <Text style={styles.footerText}>Already have an account? </Text>
-                <TouchableOpacity onPress={() => router.push('/(auth)/sign-in')}>
-                  <Text style={styles.linkText}>Sign In</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+              )}
+            </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -423,17 +435,35 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 40,
+    paddingBottom: 40,
+  },
+  bannerContainer: {
+    width: '100%',
+    height: 240,
+    backgroundColor: '#FFE5D9', // Matches gradient start
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    overflow: 'hidden',
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  banner: {
+    width: '100%',
+    height: '100%',
+  },
+  formContainer: {
+    paddingHorizontal: 24,
+    marginTop: -40, // Overlap the banner
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    alignSelf: 'center',
+    padding: 12,
+    marginBottom: 24,
   },
   logo: {
-    width: 120,
-    height: 60,
+    width: 100,
+    height: 50,
   },
   title: {
     fontSize: 32,
