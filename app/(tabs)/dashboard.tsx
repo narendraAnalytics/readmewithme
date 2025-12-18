@@ -1,4 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { SearchBar } from '@/components/dashboard/SearchBar';
+import { TopicCard } from '@/components/dashboard/TopicCard';
+import { TOPICS } from '@/constants/dashboard';
+import { useUserSync } from '@/hooks/useUserSync';
+import { getBooksByTopic, searchBooks } from '@/services/api';
+import { getReadingHistory } from '@/services/db/queries/reading';
+import { useAuth, useUser } from '@clerk/clerk-expo';
+import { Ionicons } from '@expo/vector-icons';
+import { Redirect, router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -7,23 +16,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
-  withRepeat,
-  withSequence
+  withSequence,
+  withSpring
 } from 'react-native-reanimated';
-import { router, Redirect } from 'expo-router';
-import { useAuth, useUser } from '@clerk/clerk-expo';
-import { TopicCard } from '@/components/dashboard/TopicCard';
-import { SearchBar } from '@/components/dashboard/SearchBar';
-import { TOPICS } from '@/constants/dashboard';
-import { getBooksByTopic, searchBooks } from '@/services/api';
-import { useUserSync } from '@/hooks/useUserSync';
-import { getReadingHistory } from '@/services/db/queries/reading';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -51,6 +50,23 @@ export default function DashboardScreen() {
     ],
   }));
 
+  const loadRecentBooks = async () => {
+    try {
+      const history = await getReadingHistory(user!.id, 5);
+      setRecentBooks(history);
+    } catch (error) {
+      console.error('Failed to load reading history:', error);
+    }
+  };
+
+  // Load reading history when user is signed in
+  // Rule of Hooks: Move before early returns
+  useEffect(() => {
+    if (isSignedIn && user?.id) {
+      loadRecentBooks();
+    }
+  }, [isSignedIn, user?.id]);
+
   // Auth check - show loading while Clerk initializes
   if (!isLoaded) {
     return (
@@ -65,22 +81,6 @@ export default function DashboardScreen() {
   if (!isSignedIn) {
     return <Redirect href="/(auth)/sign-in" />;
   }
-
-  // Load reading history when user is signed in
-  useEffect(() => {
-    if (isSignedIn && user?.id) {
-      loadRecentBooks();
-    }
-  }, [isSignedIn, user?.id]);
-
-  const loadRecentBooks = async () => {
-    try {
-      const history = await getReadingHistory(user!.id, 5);
-      setRecentBooks(history);
-    } catch (error) {
-      console.error('Failed to load reading history:', error);
-    }
-  };
 
   const handleHomePress = () => {
     // Animate on press
