@@ -448,7 +448,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 40,
+    paddingBottom: 80,
+    marginBottom: 20
   },
   bannerContainer: {
     width: '100%',
