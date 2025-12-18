@@ -33,38 +33,7 @@ export default function ReadingScreen() {
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
 
-  // Auth check - show loading while Clerk initializes
-  if (!isLoaded) {
-    return (
-      <View style={styles.authLoadingContainer}>
-        <ActivityIndicator size="large" color="#8B5CF6" />
-        <Text style={styles.authLoadingText}>Loading...</Text>
-      </View>
-    );
-  }
-
-  // Redirect to sign-in if not authenticated
-  if (!isSignedIn) {
-    return <Redirect href="/(auth)/sign-in" />;
-  }
-
-  // Save book to reading history when opened
-  useEffect(() => {
-    if (isSignedIn && user?.id && bookTitle && bookAuthor) {
-      saveBookToHistory(user.id, bookTitle, bookAuthor, publishedDate, topic).catch((err) =>
-        console.error('Failed to save to history:', err)
-      );
-    }
-  }, [isSignedIn, user?.id, bookTitle, bookAuthor]);
-
-  useEffect(() => {
-    setLoading(true);
-    setContent('');
-    setCurrentLang('en');
-    setContentCache({});
-    fetchReadingGuide();
-  }, [bookTitle, bookAuthor]);
-
+  // FIXED: Define all functions and useEffect hooks BEFORE any early returns to avoid hooks violation
   const fetchReadingGuide = async () => {
     // Try database cache first
     if (user?.id) {
@@ -115,6 +84,39 @@ export default function ReadingScreen() {
       setLoading(false);
     }
   };
+
+  // Save book to reading history when opened - MUST be before early returns
+  useEffect(() => {
+    if (isSignedIn && user?.id && bookTitle && bookAuthor) {
+      saveBookToHistory(user.id, bookTitle, bookAuthor, publishedDate, topic).catch((err) =>
+        console.error('Failed to save to history:', err)
+      );
+    }
+  }, [isSignedIn, user?.id, bookTitle, bookAuthor, publishedDate, topic]);
+
+  // Load reading guide on mount - MUST be before early returns
+  useEffect(() => {
+    setLoading(true);
+    setContent('');
+    setCurrentLang('en');
+    setContentCache({});
+    fetchReadingGuide();
+  }, [bookTitle, bookAuthor]);
+
+  // Auth check - show loading while Clerk initializes
+  if (!isLoaded) {
+    return (
+      <View style={styles.authLoadingContainer}>
+        <ActivityIndicator size="large" color="#8B5CF6" />
+        <Text style={styles.authLoadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  // Redirect to sign-in if not authenticated
+  if (!isSignedIn) {
+    return <Redirect href="/(auth)/sign-in" />;
+  }
 
   const handleLoadQuiz = async () => {
     setLoadingQuiz(true);

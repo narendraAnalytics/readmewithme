@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { getReadingHistory } from '@/services/db/queries/reading';
+import { useAuth, useUser } from '@clerk/clerk-expo';
+import { Ionicons } from '@expo/vector-icons';
+import { Redirect, router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -8,10 +12,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { router, Redirect } from 'expo-router';
-import { useAuth, useUser } from '@clerk/clerk-expo';
-import { getReadingHistory } from '@/services/db/queries/reading';
 
 interface HistoryItem {
   bookTitle: string;
@@ -28,6 +28,29 @@ export default function HistoryScreen() {
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
 
+  // FIXED: Define loadHistory function and useEffect BEFORE any early returns to avoid hooks violation
+  const loadHistory = async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    setError('');
+    try {
+      const history = await getReadingHistory(user.id, 50);
+      setHistoryItems(history as HistoryItem[]);
+    } catch (err) {
+      setError('Failed to load reading history');
+      console.error('Error loading history:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load history when user is signed in - MUST be before early returns
+  useEffect(() => {
+    if (isSignedIn && user?.id) {
+      loadHistory();
+    }
+  }, [isSignedIn, user?.id]);
+
   // Auth check - show loading while Clerk initializes
   if (!isLoaded) {
     return (
@@ -43,27 +66,6 @@ export default function HistoryScreen() {
     return <Redirect href="/(auth)/sign-in" />;
   }
 
-  // Load history when user is signed in
-  useEffect(() => {
-    if (isSignedIn && user?.id) {
-      loadHistory();
-    }
-  }, [isSignedIn, user?.id]);
-
-  const loadHistory = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const history = await getReadingHistory(user!.id, 50);
-      setHistoryItems(history as HistoryItem[]);
-    } catch (err) {
-      setError('Failed to load reading history');
-      console.error('Error loading history:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
@@ -74,7 +76,7 @@ export default function HistoryScreen() {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => router.push('/dashboard')}
             activeOpacity={0.7}>
             <Ionicons name="arrow-back" size={24} color="#8B5CF6" />
             <Text style={styles.backText}>Back</Text>

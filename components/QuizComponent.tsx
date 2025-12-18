@@ -4,7 +4,7 @@ import { QuizQuestion } from '@/services/types';
 
 interface QuizComponentProps {
   questions: QuizQuestion[];
-  onComplete: () => void;
+  onComplete: (score: number, answers: any[]) => void;
 }
 
 export const QuizComponent: React.FC<QuizComponentProps> = ({ questions, onComplete }) => {
@@ -12,6 +12,7 @@ export const QuizComponent: React.FC<QuizComponentProps> = ({ questions, onCompl
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [score, setScore] = useState(0);
+  const [answers, setAnswers] = useState<any[]>([]);
   const [quizComplete, setQuizComplete] = useState(false);
 
   const question = questions[currentQuestion];
@@ -22,6 +23,15 @@ export const QuizComponent: React.FC<QuizComponentProps> = ({ questions, onCompl
 
     setSelectedAnswer(index);
     setShowExplanation(true);
+
+    // Track the answer
+    const answerRecord = {
+      questionIndex: currentQuestion,
+      selectedAnswer: index,
+      correctAnswer: question.answer,
+      isCorrect: index === question.answer,
+    };
+    setAnswers([...answers, answerRecord]);
 
     if (index === question.answer) {
       setScore(score + 1);
@@ -49,7 +59,7 @@ export const QuizComponent: React.FC<QuizComponentProps> = ({ questions, onCompl
           <Text style={styles.percentageText}>
             {Math.round((score / questions.length) * 100)}%
           </Text>
-          <TouchableOpacity style={styles.backButton} onPress={onComplete}>
+          <TouchableOpacity style={styles.backButton} onPress={() => onComplete(score, answers)}>
             <Text style={styles.backButtonText}>Back to Reading</Text>
           </TouchableOpacity>
         </View>
