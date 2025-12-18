@@ -10,20 +10,7 @@ export default function HomeScreen() {
   const { isSignedIn, isLoaded, signOut } = useAuth();
   const { user } = useUser();
 
-  // Show loading state while Clerk initializes
-  if (!isLoaded) {
-    return (
-      <LinearGradient
-        colors={['#FFE5D9', '#FFF8F3']}
-        style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#8B5CF6" />
-          <Text style={styles.loadingText}>Loading...</Text>
-        </View>
-      </LinearGradient>
-    );
-  }
-
+  // FIXED: Define all functions BEFORE early return
   const handleGetStarted = () => {
     if (isSignedIn) {
       router.push('/dashboard');
@@ -39,6 +26,20 @@ export default function HomeScreen() {
       console.error('Sign out error:', error);
     }
   };
+
+  // Show loading state while Clerk initializes
+  if (!isLoaded) {
+    return (
+      <LinearGradient
+        colors={['#FFE5D9', '#FFF8F3']}
+        style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#8B5CF6" />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </LinearGradient>
+    );
+  }
 
   return (
     <LinearGradient

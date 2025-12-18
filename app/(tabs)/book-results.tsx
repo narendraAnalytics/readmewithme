@@ -21,21 +21,7 @@ export default function BookResultsScreen() {
   const topicName = params.topic as string || 'Books';
   const resultsText = params.results as string || '';
 
-  // Auth check - show loading while Clerk initializes
-  if (!isLoaded) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#8B5CF6" />
-        <Text style={styles.loadingText}>Loading...</Text>
-      </View>
-    );
-  }
-
-  // Redirect to sign-in if not authenticated
-  if (!isSignedIn) {
-    return <Redirect href="/(auth)/sign-in" />;
-  }
-
+  // FIXED: Define all functions and data BEFORE any early returns to avoid hooks violation
   // Parse the markdown results into Book objects
   const books = parseBooks(resultsText);
 
@@ -55,6 +41,21 @@ export default function BookResultsScreen() {
       },
     });
   };
+
+  // Auth check - show loading while Clerk initializes
+  if (!isLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#8B5CF6" />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  // Redirect to sign-in if not authenticated
+  if (!isSignedIn) {
+    return <Redirect href="/(auth)/sign-in" />;
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
