@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -22,6 +22,8 @@ import { TopicCard } from '@/components/dashboard/TopicCard';
 import { SearchBar } from '@/components/dashboard/SearchBar';
 import { TOPICS } from '@/constants/dashboard';
 import { getBooksByTopic, searchBooks } from '@/services/api';
+import { useUserSync } from '@/hooks/useUserSync';
+import { getReadingHistory } from '@/services/db/queries/reading';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -29,9 +31,13 @@ export default function DashboardScreen() {
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
 
+  // Auto-sync user to database on login
+  useUserSync();
+
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [recentBooks, setRecentBooks] = useState<any[]>([]);
 
   // Animation for home icon
   const scale = useSharedValue(1);
@@ -60,6 +66,22 @@ export default function DashboardScreen() {
     return <Redirect href="/(auth)/sign-in" />;
   }
 
+  // Load reading history when user is signed in
+  useEffect(() => {
+    if (isSignedIn && user?.id) {
+      loadRecentBooks();
+    }
+  }, [isSignedIn, user?.id]);
+
+  const loadRecentBooks = async () => {
+    try {
+      const history = await getReadingHistory(user!.id, 5);
+      setRecentBooks(history);
+    } catch (error) {
+      console.error('Failed to load reading history:', error);
+    }
+  };
+
   const handleHomePress = () => {
     // Animate on press
     scale.value = withSequence(
@@ -74,6 +96,10 @@ export default function DashboardScreen() {
 
     // Navigate to home
     setTimeout(() => router.push('/'), 300);
+  };
+
+  const handleHistoryPress = () => {
+    router.push('/history');
   };
 
   const handleTopicSelect = async (topicName: string) => {
@@ -146,9 +172,52 @@ export default function DashboardScreen() {
                 activeOpacity={0.7}>
                 <Ionicons name="home" size={28} color="#8B5CF6" />
               </AnimatedTouchable>
+
+              {/* History Button */}
+              <TouchableOpacity
+                style={styles.historyButton}
+                onPress={handleHistoryPress}
+                activeOpacity={0.7}>
+                <Ionicons name="time-outline" size={28} color="#8B5CF6" />
+              </TouchableOpacity>
             </View>
           </View>
         </View>
+
+        {/* Continue Reading Section */}
+        {recentBooks.length > 0 && !loading && (
+          <View style={styles.recentSection}>
+            <Text style={styles.sectionTitle}>Continue Reading</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {recentBooks.map((book, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.recentCard}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/reading',
+                      params: {
+                        title: book.bookTitle,
+                        author: book.bookAuthor,
+                      },
+                    })
+                  }
+                  activeOpacity={0.7}>
+                  <Ionicons name="book" size={32} color="#8B5CF6" />
+                  <Text style={styles.recentTitle} numberOfLines={2}>
+                    {book.bookTitle}
+                  </Text>
+                  <Text style={styles.recentAuthor} numberOfLines={1}>
+                    {book.bookAuthor}
+                  </Text>
+                  <Text style={styles.recentDate}>
+                    {new Date(book.lastReadAt).toLocaleDateString()}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Search Bar */}
         <SearchBar onSearch={handleSearch} />
@@ -244,6 +313,22 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
+  historyButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#F3E8FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#8B5CF6',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
   topicsSection: {
     paddingHorizontal: 20,
   },
@@ -281,5 +366,45 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#DC2626',
     fontSize: 14,
+  },
+  recentSection: {
+    paddingVertical: 20,
+    paddingLeft: 20,
+  },
+  recentCard: {
+    width: 150,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
+    padding: 16,
+    marginRight: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  recentTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2c3e50',
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 4,
+    height: 36,
+  },
+  recentAuthor: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  recentDate: {
+    fontSize: 11,
+    color: '#999',
+    textAlign: 'center',
   },
 });

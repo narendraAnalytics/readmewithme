@@ -1,5 +1,6 @@
 import { generateBookContent } from './gemini';
 import { Book } from './types';
+import { getCachedBooks, saveBooksToCache } from './db/queries/cache';
 
 /**
  * Type guard to check if a Partial<Book> has all required Book properties
@@ -91,8 +92,21 @@ export const parseBooks = (markdownText: string): Book[] => {
 
 /**
  * Get book recommendations by topic
+ * Now with database caching to reduce API calls
  */
 export const getBooksByTopic = async (topicName: string): Promise<string> => {
+  // Try cache first
+  try {
+    const cached = await getCachedBooks('topic', topicName);
+    if (cached) {
+      console.log('📦 Returning cached results for topic:', topicName);
+      return cached.responseText;
+    }
+  } catch (error) {
+    console.warn('⚠️ Cache lookup failed, fetching fresh data:', error);
+  }
+
+  // Cache miss - fetch from Gemini API
   const prompt = `Recommend 5 highly-rated books about "${topicName}".
   IMPORTANT: Prioritize the MOST RECENT publications (from the last 2-3 years if available). Sort these books by publication date in DESCENDING order (newest/most recent books first).
 
@@ -110,13 +124,35 @@ export const getBooksByTopic = async (topicName: string): Promise<string> => {
   Use Google Search to find the most recent, highly-rated books and ensure the published dates are accurate.`;
 
   const response = await generateBookContent(prompt, true);
+
+  // Save to cache for future requests
+  try {
+    const groundingChunksJson = JSON.stringify(response.groundingChunks || []);
+    await saveBooksToCache('topic', topicName, response.text, groundingChunksJson);
+  } catch (error) {
+    console.warn('⚠️ Failed to cache results:', error);
+  }
+
   return response.text;
 };
 
 /**
  * Search for a specific book by name
+ * Now with database caching to reduce API calls
  */
 export const searchBooks = async (query: string): Promise<string> => {
+  // Try cache first
+  try {
+    const cached = await getCachedBooks('search', query);
+    if (cached) {
+      console.log('📦 Returning cached results for search:', query);
+      return cached.responseText;
+    }
+  } catch (error) {
+    console.warn('⚠️ Cache lookup failed, fetching fresh data:', error);
+  }
+
+  // Cache miss - fetch from Gemini API
   const prompt = `I am looking for the specific book: "${query}".
 
   Please find this exact book and provide:
@@ -134,5 +170,14 @@ export const searchBooks = async (query: string): Promise<string> => {
   If you cannot find this exact book, find the closest match and explain in the description.`;
 
   const response = await generateBookContent(prompt, true);
+
+  // Save to cache for future requests
+  try {
+    const groundingChunksJson = JSON.stringify(response.groundingChunks || []);
+    await saveBooksToCache('search', query, response.text, groundingChunksJson);
+  } catch (error) {
+    console.warn('⚠️ Failed to cache results:', error);
+  }
+
   return response.text;
 };

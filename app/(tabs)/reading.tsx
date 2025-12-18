@@ -4,16 +4,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router, Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuth, useUser } from '@clerk/clerk-expo';
 import { generateBookContent, generateQuiz } from '@/services/gemini';
 import { QuizQuestion } from '@/services/types';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LANGUAGES, LanguageCode } from '@/constants/languages';
 import { QuizComponent } from '@/components/QuizComponent';
+import { saveBookToHistory, saveReadingGuide, getReadingGuide } from '@/services/db/queries/reading';
+import { saveQuizAttempt } from '@/services/db/queries/quizzes';
 
 export default function ReadingScreen() {
   const { isLoaded, isSignedIn } = useAuth();
+  const { user } = useUser();
   const params = useLocalSearchParams();
   const bookTitle = params.title as string;
   const bookAuthor = params.author as string;
@@ -45,6 +48,15 @@ export default function ReadingScreen() {
     return <Redirect href="/(auth)/sign-in" />;
   }
 
+  // Save book to reading history when opened
+  useEffect(() => {
+    if (isSignedIn && user?.id && bookTitle && bookAuthor) {
+      saveBookToHistory(user.id, bookTitle, bookAuthor, publishedDate, topic).catch((err) =>
+        console.error('Failed to save to history:', err)
+      );
+    }
+  }, [isSignedIn, user?.id, bookTitle, bookAuthor]);
+
   useEffect(() => {
     setLoading(true);
     setContent('');
@@ -54,6 +66,24 @@ export default function ReadingScreen() {
   }, [bookTitle, bookAuthor]);
 
   const fetchReadingGuide = async () => {
+    // Try database cache first
+    if (user?.id) {
+      try {
+        const cached = await getReadingGuide(user.id, bookTitle, bookAuthor);
+        if (cached?.readingGuideContent) {
+          console.log('📚 Loading cached reading guide');
+          setContent(cached.readingGuideContent);
+          setContentCache({ [cached.languageCode]: cached.readingGuideContent });
+          setCurrentLang(cached.languageCode as LanguageCode);
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.warn('Failed to load cached guide:', error);
+      }
+    }
+
+    // Cache miss - fetch from Gemini
     const prompt = `I want to read and understand the book "${bookTitle}" by "${bookAuthor}".
 
     Please provide a comprehensive "Read With Me" guide that includes:
@@ -73,6 +103,11 @@ export default function ReadingScreen() {
       const response = await generateBookContent(prompt, true);
       setContent(response.text);
       setContentCache({ 'en': response.text });
+
+      // Save to database cache
+      if (user?.id) {
+        await saveReadingGuide(user.id, bookTitle, bookAuthor, response.text, 'en');
+      }
     } catch (error) {
       console.error('Failed to fetch reading guide:', error);
       setContent('Failed to load reading guide. Please try again.');
@@ -345,7 +380,20 @@ ${originalText}`;
           ) : quizQuestions.length > 0 ? (
             <QuizComponent
               questions={quizQuestions}
-              onComplete={() => setReadingTab('guide')}
+              onComplete={(score, answers) => {
+                // Save quiz attempt to database
+                if (user?.id) {
+                  saveQuizAttempt({
+                    clerkId: user.id,
+                    bookTitle,
+                    bookAuthor,
+                    score,
+                    totalQuestions: quizQuestions.length,
+                    answersJson: JSON.stringify(answers),
+                  }).catch((err) => console.error('Failed to save quiz:', err));
+                }
+                setReadingTab('guide');
+              }}
             />
           ) : null
         )}
