@@ -5,10 +5,25 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo';
+import { ClerkProvider, ClerkLoaded, useAuth } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
+import { useEffect } from 'react';
+import { setupAuthInterceptor } from '@/services/apiClient';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+
+/**
+ * Setup auth interceptor for API requests
+ */
+function AuthInterceptorSetup() {
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    setupAuthInterceptor(getToken);
+  }, [getToken]);
+
+  return null;
+}
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -24,6 +39,7 @@ export default function RootLayout() {
 
   return (
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
+      <AuthInterceptorSetup />
       <ClerkLoaded>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <Stack>

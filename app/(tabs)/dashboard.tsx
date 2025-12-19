@@ -3,7 +3,7 @@ import { TopicCard } from '@/components/dashboard/TopicCard';
 import { TOPICS } from '@/constants/dashboard';
 import { useUserSync } from '@/hooks/useUserSync';
 import { getBooksByTopic, searchBooks } from '@/services/api';
-import { getReadingHistory } from '@/services/db/queries/reading';
+import { readingApi } from '@/services/backendApi';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
@@ -52,7 +52,7 @@ export default function DashboardScreen() {
 
   const loadRecentBooks = async () => {
     try {
-      const history = await getReadingHistory(user!.id, 5);
+      const history = await readingApi.getHistory(5);
       setRecentBooks(history);
     } catch (error) {
       console.error('Failed to load reading history:', error);

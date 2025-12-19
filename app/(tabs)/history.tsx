@@ -1,4 +1,4 @@
-import { getReadingHistory } from '@/services/db/queries/reading';
+import { readingApi } from '@/services/backendApi';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
@@ -34,7 +34,7 @@ export default function HistoryScreen() {
     setLoading(true);
     setError('');
     try {
-      const history = await getReadingHistory(user.id, 50);
+      const history = await readingApi.getHistory(50);
       setHistoryItems(history as HistoryItem[]);
     } catch (err) {
       setError('Failed to load reading history');

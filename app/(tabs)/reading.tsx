@@ -1,18 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { ScrollView, Text, View, StyleSheet, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, router, Redirect } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { TouchableOpacity } from 'react-native';
-import { useAuth, useUser } from '@clerk/clerk-expo';
-import { generateBookContent, generateQuiz } from '@/services/gemini';
+import { QuizComponent } from '@/components/QuizComponent';
+import { LANGUAGES, LanguageCode } from '@/constants/languages';
+import { quizApi, readingApi } from '@/services/backendApi';
 import { QuizQuestion } from '@/services/types';
+import { useAuth, useUser } from '@clerk/clerk-expo';
+import { Ionicons } from '@expo/vector-icons';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { LinearGradient } from 'expo-linear-gradient';
-import { LANGUAGES, LanguageCode } from '@/constants/languages';
-import { QuizComponent } from '@/components/QuizComponent';
-import { saveBookToHistory, saveReadingGuide, getReadingGuide } from '@/services/db/queries/reading';
-import { saveQuizAttempt } from '@/services/db/queries/quizzes';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ReadingScreen() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -35,48 +32,24 @@ export default function ReadingScreen() {
 
   // FIXED: Define all functions and useEffect hooks BEFORE any early returns to avoid hooks violation
   const fetchReadingGuide = async () => {
-    // Try database cache first
-    if (user?.id) {
-      try {
-        const cached = await getReadingGuide(user.id, bookTitle, bookAuthor);
-        if (cached?.readingGuideContent) {
-          console.log('📚 Loading cached reading guide');
-          setContent(cached.readingGuideContent);
-          setContentCache({ [cached.languageCode]: cached.readingGuideContent });
-          setCurrentLang(cached.languageCode as LanguageCode);
-          setLoading(false);
-          return;
-        }
-      } catch (error) {
-        console.warn('Failed to load cached guide:', error);
-      }
-    }
-
-    // Cache miss - fetch from Gemini
-    const prompt = `I want to read and understand the book "${bookTitle}" by "${bookAuthor}".
-
-    Please provide a comprehensive "Read With Me" guide that includes:
-    1. A detailed synopsis of the book's core argument or plot
-    2. Key themes and main ideas
-    3. Important takeaways
-    4. Discussion questions for reflection
-
-    Format your response with clear sections using:
-    ## for main section headings
-    ### for subsections
-    **text** for emphasis
-
-    Use Google Search to ensure accuracy.`;
-
     try {
-      const response = await generateBookContent(prompt, true);
-      setContent(response.text);
-      setContentCache({ 'en': response.text });
-
-      // Save to database cache
-      if (user?.id) {
-        await saveReadingGuide(user.id, bookTitle, bookAuthor, response.text, 'en');
+      // 1. Ensure the book is saved to history FIRST before we try to fetch/generate a guide
+      // This prevents race conditions where the backend can't find the record it needs to update
+      if (isSignedIn && user?.id) {
+        console.log('📝 Syncing book history before fetch...');
+        await readingApi.saveToHistory(bookTitle, bookAuthor, publishedDate, topic);
       }
+
+      // 2. Now fetch the guide from the backend API
+      const response = await readingApi.getReadingGuide(bookTitle, bookAuthor);
+
+      if (response.cached) {
+        console.log('📚 Loading cached reading guide');
+      }
+
+      setContent(response.guide);
+      setContentCache({ [response.languageCode]: response.guide });
+      setCurrentLang(response.languageCode as LanguageCode);
     } catch (error) {
       console.error('Failed to fetch reading guide:', error);
       setContent('Failed to load reading guide. Please try again.');
@@ -84,15 +57,6 @@ export default function ReadingScreen() {
       setLoading(false);
     }
   };
-
-  // Save book to reading history when opened - MUST be before early returns
-  useEffect(() => {
-    if (isSignedIn && user?.id && bookTitle && bookAuthor) {
-      saveBookToHistory(user.id, bookTitle, bookAuthor, publishedDate, topic).catch((err) =>
-        console.error('Failed to save to history:', err)
-      );
-    }
-  }, [isSignedIn, user?.id, bookTitle, bookAuthor, publishedDate, topic]);
 
   // Load reading guide on mount - MUST be before early returns
   useEffect(() => {
@@ -121,7 +85,7 @@ export default function ReadingScreen() {
   const handleLoadQuiz = async () => {
     setLoadingQuiz(true);
     try {
-      const questions = await generateQuiz(bookTitle, bookAuthor);
+      const questions = await quizApi.generateQuiz(bookTitle, bookAuthor);
       setQuizQuestions(questions);
       setReadingTab('quiz');
     } catch (error) {
@@ -142,21 +106,19 @@ export default function ReadingScreen() {
       return;
     }
 
-    const originalText = contentCache['en'];
+    // TODO: Translation feature needs backend endpoint
+    // For now, only English is supported
+    alert('Translation feature coming soon! Currently only English is supported.');
+
+    /* const originalText = contentCache['en'];
     if (!originalText) return;
 
     setIsTranslating(true);
 
     try {
       const targetLang = LANGUAGES.find(l => l.code === langCode)?.native || langCode;
-      const prompt = `Translate the following markdown text into ${targetLang}.
-IMPORTANT: Maintain all Markdown formatting exactly (headers ##, bold **, lists *, etc.).
-Do not shorten the content. Translate it fully and accurately.
-
-Content to translate:
-${originalText}`;
-
-      const response = await generateBookContent(prompt, false);
+      // TODO: Create backend endpoint for translation
+      // const response = await readingApi.translateGuide(originalText, targetLang);
 
       setContentCache(prev => ({ ...prev, [langCode]: response.text }));
       setContent(response.text);
@@ -166,7 +128,7 @@ ${originalText}`;
       alert('Translation failed. Please try again.');
     } finally {
       setIsTranslating(false);
-    }
+    } */
   };
 
   // Helper component for gradient text
@@ -385,7 +347,7 @@ ${originalText}`;
               onComplete={(score, answers) => {
                 // Save quiz attempt to database
                 if (user?.id) {
-                  saveQuizAttempt({
+                  quizApi.saveAttempt({
                     clerkId: user.id,
                     bookTitle,
                     bookAuthor,

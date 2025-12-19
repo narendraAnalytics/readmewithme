@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/clerk-expo';
-import { syncUser } from '@/services/db/queries/users';
+import { userApi } from '@/services/backendApi';
 
 /**
  * Custom hook to automatically sync Clerk user to database
@@ -35,15 +35,14 @@ export function useUserSync() {
       try {
         // Extract user data from Clerk
         const userData = {
-          clerkId: user.id,
           email: user.primaryEmailAddress?.emailAddress || null,
           username: user.username || null,
           firstName: user.firstName || null,
           lastName: user.lastName || null,
         };
 
-        // Sync to database
-        await syncUser(userData);
+        // Sync to database via backend API
+        await userApi.syncUser(userData);
 
         setSynced(true);
         console.log('✅ User synced successfully:', user.id);
