@@ -4,11 +4,54 @@ import { Ionicons } from '@expo/vector-icons';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import React from 'react';
 import { ActivityIndicator, Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming
+} from 'react-native-reanimated';
 
 export default function HomeScreen() {
   const { isSignedIn, isLoaded, signOut } = useAuth();
   const { user } = useUser();
+
+  // Animation for the book icon in the button
+  const iconScale = useSharedValue(1);
+  const iconRotate = useSharedValue(0);
+
+  React.useEffect(() => {
+    // Continuous pulse/bounce effect
+    iconScale.value = withRepeat(
+      withSequence(
+        withTiming(1.2, { duration: 1000, easing: Easing.bezier(0.25, 0.1, 0.25, 1) }),
+        withTiming(1, { duration: 1000, easing: Easing.bezier(0.25, 0.1, 0.25, 1) })
+      ),
+      -1,
+      true
+    );
+
+    // Subtle rotation
+    iconRotate.value = withRepeat(
+      withSequence(
+        withTiming(-5, { duration: 800 }),
+        withTiming(5, { duration: 800 }),
+        withTiming(0, { duration: 800 })
+      ),
+      -1,
+      true
+    );
+  }, []);
+
+  const animatedIconStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: iconScale.value },
+      { rotate: `${iconRotate.value}deg` }
+    ],
+  }));
 
   // FIXED: Define all functions BEFORE early return
   const handleGetStarted = () => {
@@ -97,7 +140,9 @@ export default function HomeScreen() {
               end={{ x: 1, y: 1 }}
               style={styles.button}>
               <View style={styles.buttonContent}>
-                <Ionicons name="book-outline" size={20} color="#FFFFFF" />
+                <Animated.View style={animatedIconStyle}>
+                  <Ionicons name="book-outline" size={20} color="#FFFFFF" />
+                </Animated.View>
                 <Text style={styles.buttonText}>
                   {isSignedIn && user?.username
                     ? `Welcome ${user.username}`
