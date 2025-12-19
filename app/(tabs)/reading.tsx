@@ -256,7 +256,9 @@ export default function ReadingScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={['#F5F3FF', '#E0E7FF']}
+        style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.push({
@@ -266,7 +268,7 @@ export default function ReadingScreen() {
               results: results,
             },
           })}>
-          <Ionicons name="arrow-back" size={24} color="#8B5CF6" />
+          <Ionicons name="arrow-back" size={24} color="#6D28D9" />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle} numberOfLines={2}>
@@ -324,7 +326,7 @@ export default function ReadingScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </LinearGradient>
 
       {/* Content */}
       <ScrollView
@@ -390,7 +392,6 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   header: {
-    backgroundColor: '#8B5CF6',
     paddingHorizontal: 20,
     paddingVertical: 24,
     borderBottomLeftRadius: 24,
@@ -405,7 +406,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -416,27 +417,27 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#4C1D95',
     marginBottom: 8,
     lineHeight: 36,
   },
   headerAuthor: {
     fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: '#6D28D9',
     fontStyle: 'italic',
     marginBottom: 12,
   },
   dateBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(139, 92, 246, 0.2)',
   },
   dateText: {
-    color: '#FFFFFF',
+    color: '#6D28D9',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -516,26 +517,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(139, 92, 246, 0.2)',
   },
   languageButtonActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: '#8B5CF6',
+    borderColor: '#8B5CF6',
   },
   languageText: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: '#6D28D9',
   },
   languageTextActive: {
-    color: '#8B5CF6',
+    color: '#FFFFFF',
   },
   tabContainer: {
     flexDirection: 'row',
     marginTop: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
     borderRadius: 8,
     padding: 4,
   },
@@ -547,12 +548,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabButtonActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   tabText: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#6D28D9',
   },
   tabTextActive: {
     color: '#8B5CF6',
