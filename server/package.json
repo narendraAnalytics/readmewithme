@@ -2,7 +2,7 @@
   "name": "readwithme-backend",
   "version": "1.0.0",
   "description": "Node.js + Express backend for Read With Me app",
-  "main": "src/index.ts",
+  "main": "api/index.ts",
   "scripts": {
     "dev": "nodemon",
     "build": "tsc",
