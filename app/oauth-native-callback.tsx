@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuth, useSignIn, useSignUp } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 // Ensure OAuth session completes
 WebBrowser.maybeCompleteAuthSession();
@@ -15,22 +15,41 @@ WebBrowser.maybeCompleteAuthSession();
 export default function OAuthNativeCallback() {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useAuth();
+  const { signUp, isLoaded: signUpLoaded } = useSignUp();
+  const { signIn, isLoaded: signInLoaded } = useSignIn();
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    console.log('OAuth callback mounted. isLoaded:', isLoaded, 'isSignedIn:', isSignedIn);
+    console.log('OAuth callback state:', {
+      isLoaded,
+      isSignedIn,
+      currentPath: router.toString(),
+    });
 
-    // If already signed in, redirect to home
+    // If already signed in, redirect to home immediately
     if (isLoaded && isSignedIn) {
       console.log('User signed in, redirecting to home...');
       router.replace('/');
       return;
     }
 
-    // Increase timeout to 30 seconds
+    // Check for incomplete sign-up requirements
+    if (signUpLoaded && signUp?.status === 'missing_requirements') {
+      console.log('Detected incomplete sign-up in callback, redirecting back to auth screen...');
+      if (signUp.missingFields.includes('username')) {
+        // Redirect back to sign-up or sign-in with a parameter to trigger the username prompt
+        router.replace('/(auth)/sign-in?missing_username=true');
+        return;
+      }
+    }
+
+    // If loaded but not signed in, we wait.
+    // Sometimes there's a small delay between the deep link and Clerk state updating.
     const timeout = setTimeout(() => {
-      console.log('OAuth timeout - no sign-in detected after 30 seconds');
-      setError(true);
+      if (!isSignedIn) {
+        console.log('OAuth timeout - no sign-in detected after 30 seconds');
+        setError(true);
+      }
     }, 30000);
 
     return () => clearTimeout(timeout);

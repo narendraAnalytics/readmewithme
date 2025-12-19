@@ -1,10 +1,10 @@
 import AuthDivider from '@/components/AuthDivider';
 import SocialAuthButton from '@/components/SocialAuthButton';
-import { useSignIn, useSSO } from '@clerk/clerk-expo';
+import { useSignIn, useSignUp, useSSO } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -42,6 +42,8 @@ const useWarmUpBrowser = () => {
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
+  const { signUp: manualSignUp } = useSignUp();
+  const params = useLocalSearchParams();
 
   // Browser warming
   useWarmUpBrowser();
@@ -56,6 +58,8 @@ export default function SignInScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [pendingEmailCode, setPendingEmailCode] = useState(false);
   const [emailCode, setEmailCode] = useState('');
+  const [pendingUsername, setPendingUsername] = useState(false);
+  const [username, setUsername] = useState('');
 
   // SSO loading states
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -97,6 +101,14 @@ export default function SignInScreen() {
     };
   });
 
+  // Check for redirected missing username
+  useEffect(() => {
+    if (params.missing_username === 'true') {
+      console.log('Detected missing_username param from redirect');
+      setPendingUsername(true);
+    }
+  }, [params.missing_username]);
+
   // Mobile SSO handler - manually triggers SSO flow
   const onOAuthPress = useCallback(async (
     provider: 'google' | 'github' | 'linkedin',
@@ -106,23 +118,44 @@ export default function SignInScreen() {
     setError('');
 
     try {
-      // Trigger OAuth flow with redirect URL
-      const { createdSessionId, setActive: oauthSetActive, signIn: oauthSignIn, signUp } =
-        await startSSOFlow({
-          strategy: `oauth_${provider}`,
-          redirectUrl: Linking.createURL('/oauth-native-callback', { scheme: 'readwithme' })
-        });
+      // Trigger OAuth flow - using the redirectUrl configured in Clerk dashboard
+      const result = await startSSOFlow({
+        strategy: `oauth_${provider}`,
+        redirectUrl: Linking.createURL('/oauth-native-callback', { scheme: 'readwithme' })
+      });
+
+      console.log(`${provider} OAuth full result:`, JSON.stringify(result, (key, value) => {
+        if (key === 'setActive') return '[Function]';
+        return value;
+      }, 2));
+
+      const { createdSessionId, setActive: oauthSetActive, signIn: oauthSignIn, signUp } = result;
+
+      console.log(`${provider} Statuses - SignIn: ${oauthSignIn?.status}, SignUp: ${signUp?.status}`);
 
       // If session created, set it as active
       if (createdSessionId && oauthSetActive) {
+        console.log(`Setting active session: ${createdSessionId}`);
         await oauthSetActive({ session: createdSessionId });
         router.replace('/');
       } else {
-        // Handle edge cases
-        if (signUp?.verifications?.externalAccount?.status === 'transferable') {
+        // Handle incomplete sign-up or sign-in
+        if (signUp?.status === 'missing_requirements' && signUp.missingFields.includes('username')) {
+          console.log('SignUp missing username, prompting user...');
+          setPendingUsername(true);
+          return;
+        }
+
+        if (signUp?.status === 'missing_requirements') {
+          console.log('SignUp missing requirements:', signUp.missingFields);
+          setError(`Please complete your profile: ${signUp.missingFields.join(', ')}`);
+        } else if (signUp?.verifications?.externalAccount?.status === 'transferable') {
           setError('Email already registered. Please sign in instead.');
+        } else if (oauthSignIn?.status === 'needs_second_factor') {
+          setError('Two-factor authentication required.');
         } else {
-          setError('Authentication cancelled');
+          console.log('OAuth incomplete - no createdSessionId and no obvious requirement');
+          setError('Authentication incomplete. Please try again.');
         }
       }
     } catch (err: any) {
@@ -246,6 +279,35 @@ export default function SignInScreen() {
     }
   };
 
+  const onCompleteOAuthSignUp = async () => {
+    if (!manualSignUp || !username.trim()) {
+      setError('Please choose a username');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await manualSignUp.update({
+        username: username.trim(),
+      });
+
+      if (result.status === 'complete') {
+        if (setActive) {
+          await setActive({ session: result.createdSessionId });
+        }
+        router.replace('/');
+      } else {
+        setError('Verification incomplete. Please try again.');
+      }
+    } catch (err: any) {
+      setError(err.errors?.[0]?.message || 'Failed to set username');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <LinearGradient
       colors={['#FFE5D9', '#FFF8F3']}
@@ -294,8 +356,14 @@ export default function SignInScreen() {
               </View>
 
               {/* Title */}
-              <Text style={styles.title}>Welcome Back</Text>
-              <Text style={styles.subtitle}>Sign in to continue your reading journey</Text>
+              <Text style={styles.title}>
+                {pendingUsername ? 'Complete Profile' : 'Welcome Back'}
+              </Text>
+              <Text style={styles.subtitle}>
+                {pendingUsername
+                  ? 'Choose a unique username to finish signing up'
+                  : 'Sign in to continue your reading journey'}
+              </Text>
 
               {/* Error Message */}
               {error ? (
@@ -307,7 +375,7 @@ export default function SignInScreen() {
 
               {pendingEmailCode ? (
                 <>
-                  {/* Email Code Verification UI */}
+                  {/* Email Code Verification UI (omitted for brevity, keeping same) */}
                   <Text style={styles.infoText}>
                     We've sent a verification code to {emailAddress}
                   </Text>
@@ -356,9 +424,53 @@ export default function SignInScreen() {
                     <Text style={styles.backText}>Back to sign in</Text>
                   </TouchableOpacity>
                 </>
+              ) : pendingUsername ? (
+                <>
+                  {/* Username Entry UI */}
+                  <View style={styles.inputContainer}>
+                    <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Choose a username"
+                      placeholderTextColor="#999"
+                      value={username}
+                      onChangeText={setUsername}
+                      autoCapitalize="none"
+                      editable={!loading}
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={onCompleteOAuthSignUp}
+                    disabled={loading}
+                    style={styles.buttonContainer}>
+                    <LinearGradient
+                      colors={['#8B5CF6', '#EC4899']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.button}>
+                      {loading ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <View style={styles.buttonContent}>
+                          <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
+                          <Text style={styles.buttonText}>Complete Sign Up</Text>
+                        </View>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => setPendingUsername(false)}
+                    style={styles.backButton}>
+                    <Ionicons name="close-circle-outline" size={16} color="#8B5CF6" />
+                    <Text style={styles.backText}>Cancel</Text>
+                  </TouchableOpacity>
+                </>
               ) : (
                 <>
-                  {/* Social Auth Buttons */}
+                  {/* Social Auth Buttons (omitted for brevity, keeping same) */}
                   <SocialAuthButton
                     provider="oauth_google"
                     onPress={() => onOAuthPress('google', setGoogleLoading)}
@@ -422,8 +534,8 @@ export default function SignInScreen() {
                 </>
               )}
 
-              {/* Sign In Button - Only show when not pending email code */}
-              {!pendingEmailCode && (
+              {/* Sign In Button - Only show when not pending email code or username */}
+              {!pendingEmailCode && !pendingUsername && (
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={onSignInPress}
@@ -447,7 +559,7 @@ export default function SignInScreen() {
               )}
 
               {/* Sign Up Link */}
-              {!pendingEmailCode && (
+              {!pendingEmailCode && !pendingUsername && (
                 <View style={styles.footer}>
                   <Text style={styles.footerText}>Don't have an account? </Text>
                   <TouchableOpacity onPress={() => router.push('/(auth)/sign-up')}>
@@ -460,7 +572,7 @@ export default function SignInScreen() {
         </KeyboardAvoidingView>
 
         {/* Animated Scroll Indicator */}
-        {!pendingEmailCode && (
+        {!pendingEmailCode && !pendingUsername && (
           <Animated.View style={[styles.scrollIndicator, animatedArrowStyle]}>
             <Ionicons name="chevron-down" size={30} color="#8B5CF6" />
           </Animated.View>

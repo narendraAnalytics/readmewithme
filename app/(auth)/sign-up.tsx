@@ -4,7 +4,7 @@ import { useSignUp, useSSO } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -45,6 +45,7 @@ const useWarmUpBrowser = () => {
 
 export default function SignUpScreen() {
   const { signUp, setActive, isLoaded } = useSignUp();
+  const params = useLocalSearchParams();
 
   // Browser warming
   useWarmUpBrowser();
@@ -60,6 +61,15 @@ export default function SignUpScreen() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [pendingVerification, setPendingVerification] = useState(false);
+  const [pendingUsername, setPendingUsername] = useState(false);
+
+  // Check for redirected missing username
+  useEffect(() => {
+    if (params.missing_username === 'true') {
+      console.log('Detected missing_username param from redirect');
+      setPendingUsername(true);
+    }
+  }, [params.missing_username]);
 
   // SSO loading states
   const [googleLoading, setGoogleLoading] = React.useState(false);
@@ -110,23 +120,44 @@ export default function SignUpScreen() {
     setError('');
 
     try {
-      // Trigger OAuth flow with redirect URL
-      const { createdSessionId, setActive: oauthSetActive, signIn, signUp: oauthSignUp } =
-        await startSSOFlow({
-          strategy: `oauth_${provider}`,
-          redirectUrl: Linking.createURL('/oauth-native-callback', { scheme: 'readwithme' })
-        });
+      // Trigger OAuth flow - using the redirectUrl configured in Clerk dashboard
+      const result = await startSSOFlow({
+        strategy: `oauth_${provider}`,
+        redirectUrl: Linking.createURL('/oauth-native-callback', { scheme: 'readwithme' })
+      });
+
+      console.log(`${provider} OAuth full result:`, JSON.stringify(result, (key, value) => {
+        if (key === 'setActive') return '[Function]';
+        return value;
+      }, 2));
+
+      const { createdSessionId, setActive: oauthSetActive, signIn, signUp: oauthSignUp } = result;
+
+      console.log(`${provider} Statuses - SignIn: ${signIn?.status}, SignUp: ${oauthSignUp?.status}`);
 
       // If session created, set it as active
       if (createdSessionId && oauthSetActive) {
+        console.log(`Setting active session: ${createdSessionId}`);
         await oauthSetActive({ session: createdSessionId });
         router.replace('/');
       } else {
-        // Handle edge cases
-        if (oauthSignUp?.verifications?.externalAccount?.status === 'transferable') {
+        // Handle incomplete sign-up or sign-in
+        if (oauthSignUp?.status === 'missing_requirements' && oauthSignUp.missingFields.includes('username')) {
+          console.log('SignUp missing username, prompting user...');
+          setPendingUsername(true);
+          return;
+        }
+
+        if (oauthSignUp?.status === 'missing_requirements') {
+          console.log('SignUp missing requirements:', oauthSignUp.missingFields);
+          setError(`Please complete your profile: ${oauthSignUp.missingFields.join(', ')}`);
+        } else if (oauthSignUp?.verifications?.externalAccount?.status === 'transferable') {
           setError('Email already registered. Please sign in instead.');
+        } else if (signIn?.status === 'needs_second_factor') {
+          setError('Two-factor authentication required.');
         } else {
-          setError('Authentication cancelled');
+          console.log('OAuth incomplete - no createdSessionId and no obvious requirement');
+          setError('Authentication incomplete. Please try again.');
         }
       }
     } catch (err: any) {
@@ -219,6 +250,35 @@ export default function SignUpScreen() {
     }
   };
 
+  const onCompleteOAuthSignUp = async () => {
+    if (!isLoaded || !signUp || !username.trim()) {
+      setError('Please choose a username');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await signUp.update({
+        username: username.trim(),
+      });
+
+      if (result.status === 'complete') {
+        if (setActive) {
+          await setActive({ session: result.createdSessionId });
+        }
+        router.replace('/');
+      } else {
+        setError('Verification incomplete. Please try again.');
+      }
+    } catch (err: any) {
+      setError(err.errors?.[0]?.message || 'Failed to set username');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <LinearGradient
       colors={['#FFE5D9', '#FFF8F3']}
@@ -268,12 +328,14 @@ export default function SignUpScreen() {
 
               {/* Title */}
               <Text style={styles.title}>
-                {pendingVerification ? 'Verify Email' : 'Create Account'}
+                {pendingVerification ? 'Verify Email' : pendingUsername ? 'Complete Profile' : 'Create Account'}
               </Text>
               <Text style={styles.subtitle}>
                 {pendingVerification
                   ? 'Enter the code sent to your email'
-                  : 'Join ReadWithME to start your journey'}
+                  : pendingUsername
+                    ? 'Choose a unique username to finish signing up'
+                    : 'Join ReadWithME to start your journey'}
               </Text>
 
               {/* Error Message */}
@@ -285,105 +347,146 @@ export default function SignUpScreen() {
               ) : null}
 
               {!pendingVerification ? (
-                <>
-                  {/* Social Auth Buttons */}
-                  <SocialAuthButton
-                    provider="oauth_google"
-                    onPress={() => onOAuthPress('google', setGoogleLoading)}
-                    loading={googleLoading}
-                    disabled={loading || githubLoading || linkedinLoading}
-                  />
-                  <SocialAuthButton
-                    provider="oauth_github"
-                    onPress={() => onOAuthPress('github', setGithubLoading)}
-                    loading={githubLoading}
-                    disabled={loading || googleLoading || linkedinLoading}
-                  />
-                  <SocialAuthButton
-                    provider="oauth_linkedin"
-                    onPress={() => onOAuthPress('linkedin', setLinkedinLoading)}
-                    loading={linkedinLoading}
-                    disabled={loading || googleLoading || githubLoading}
-                  />
-
-                  {/* Divider */}
-                  <AuthDivider />
-
-                  {/* Username Input */}
-                  <View style={styles.inputContainer}>
-                    <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Username"
-                      placeholderTextColor="#999"
-                      value={username}
-                      onChangeText={setUsername}
-                      autoCapitalize="none"
-                      editable={!loading && !googleLoading && !githubLoading && !linkedinLoading}
-                    />
-                  </View>
-
-                  {/* Email Input */}
-                  <View style={styles.inputContainer}>
-                    <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Email address"
-                      placeholderTextColor="#999"
-                      value={emailAddress}
-                      onChangeText={setEmailAddress}
-                      autoCapitalize="none"
-                      keyboardType="email-address"
-                      editable={!loading && !googleLoading && !githubLoading && !linkedinLoading}
-                    />
-                  </View>
-
-                  {/* Password Input */}
-                  <View style={styles.inputContainer}>
-                    <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Password (min. 8 characters)"
-                      placeholderTextColor="#999"
-                      value={password}
-                      onChangeText={setPassword}
-                      secureTextEntry={!showPassword}
-                      autoCapitalize="none"
-                      editable={!loading && !googleLoading && !githubLoading && !linkedinLoading}
-                    />
-                    <TouchableOpacity
-                      onPress={() => setShowPassword(!showPassword)}
-                      style={styles.eyeIcon}>
-                      <Ionicons
-                        name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                        size={20}
-                        color="#666"
+                pendingUsername ? (
+                  <>
+                    {/* Username Entry UI for OAuth */}
+                    <View style={styles.inputContainer}>
+                      <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Choose a username"
+                        placeholderTextColor="#999"
+                        value={username}
+                        onChangeText={setUsername}
+                        autoCapitalize="none"
+                        editable={!loading}
                       />
-                    </TouchableOpacity>
-                  </View>
+                    </View>
 
-                  {/* Sign Up Button */}
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={onSignUpPress}
-                    disabled={loading}
-                    style={styles.buttonContainer}>
-                    <LinearGradient
-                      colors={['#8B5CF6', '#EC4899']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.button}>
-                      {loading ? (
-                        <ActivityIndicator size="small" color="#FFFFFF" />
-                      ) : (
-                        <View style={styles.buttonContent}>
-                          <Ionicons name="person-add-outline" size={20} color="#FFFFFF" />
-                          <Text style={styles.buttonText}>Create Account</Text>
-                        </View>
-                      )}
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </>
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      onPress={onCompleteOAuthSignUp}
+                      disabled={loading}
+                      style={styles.buttonContainer}>
+                      <LinearGradient
+                        colors={['#8B5CF6', '#EC4899']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.button}>
+                        {loading ? (
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                        ) : (
+                          <View style={styles.buttonContent}>
+                            <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
+                            <Text style={styles.buttonText}>Complete Sign Up</Text>
+                          </View>
+                        )}
+                      </LinearGradient>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() => setPendingUsername(false)}
+                      style={styles.backButton}>
+                      <Ionicons name="close-circle-outline" size={16} color="#8B5CF6" />
+                      <Text style={styles.backText}>Cancel</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <>
+                    {/* Social Auth Buttons (omitted for brevity, keeping same logic) */}
+                    <SocialAuthButton
+                      provider="oauth_google"
+                      onPress={() => onOAuthPress('google', setGoogleLoading)}
+                      loading={googleLoading}
+                      disabled={loading || githubLoading || linkedinLoading}
+                    />
+                    <SocialAuthButton
+                      provider="oauth_github"
+                      onPress={() => onOAuthPress('github', setGithubLoading)}
+                      loading={githubLoading}
+                      disabled={loading || googleLoading || linkedinLoading}
+                    />
+                    <SocialAuthButton
+                      provider="oauth_linkedin"
+                      onPress={() => onOAuthPress('linkedin', setLinkedinLoading)}
+                      loading={linkedinLoading}
+                      disabled={loading || googleLoading || githubLoading}
+                    />
+
+                    <AuthDivider />
+
+                    <View style={styles.inputContainer}>
+                      <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Username"
+                        placeholderTextColor="#999"
+                        value={username}
+                        onChangeText={setUsername}
+                        autoCapitalize="none"
+                        editable={!loading && !googleLoading && !githubLoading && !linkedinLoading}
+                      />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                      <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Email address"
+                        placeholderTextColor="#999"
+                        value={emailAddress}
+                        onChangeText={setEmailAddress}
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                        editable={!loading && !googleLoading && !githubLoading && !linkedinLoading}
+                      />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                      <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Password (min. 8 characters)"
+                        placeholderTextColor="#999"
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry={!showPassword}
+                        autoCapitalize="none"
+                        editable={!loading && !googleLoading && !githubLoading && !linkedinLoading}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setShowPassword(!showPassword)}
+                        style={styles.eyeIcon}>
+                        <Ionicons
+                          name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                          size={20}
+                          color="#666"
+                        />
+                      </TouchableOpacity>
+                    </View>
+
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      onPress={onSignUpPress}
+                      disabled={loading}
+                      style={styles.buttonContainer}>
+                      <LinearGradient
+                        colors={['#8B5CF6', '#EC4899']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.button}>
+                        {loading ? (
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                        ) : (
+                          <View style={styles.buttonContent}>
+                            <Ionicons name="person-add-outline" size={20} color="#FFFFFF" />
+                            <Text style={styles.buttonText}>Create Account</Text>
+                          </View>
+                        )}
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </>
+                )
               ) : (
                 <>
                   {/* Verification Code Input */}
@@ -401,7 +504,6 @@ export default function SignUpScreen() {
                     />
                   </View>
 
-                  {/* Verify Button */}
                   <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={onVerifyPress}
@@ -423,7 +525,6 @@ export default function SignUpScreen() {
                     </LinearGradient>
                   </TouchableOpacity>
 
-                  {/* Back to Sign Up */}
                   <TouchableOpacity
                     onPress={() => setPendingVerification(false)}
                     style={styles.backButton}>
@@ -434,7 +535,7 @@ export default function SignUpScreen() {
               )}
 
               {/* Sign In Link */}
-              {!pendingVerification && (
+              {!pendingVerification && !pendingUsername && (
                 <View style={styles.footer}>
                   <Text style={styles.footerText}>Already have an account? </Text>
                   <TouchableOpacity onPress={() => router.push('/(auth)/sign-in')}>
@@ -447,7 +548,7 @@ export default function SignUpScreen() {
         </KeyboardAvoidingView>
 
         {/* Animated Scroll Indicator */}
-        {!pendingVerification && (
+        {!pendingVerification && !pendingUsername && (
           <Animated.View style={[styles.scrollIndicator, animatedArrowStyle]}>
             <Ionicons name="chevron-down" size={30} color="#8B5CF6" />
           </Animated.View>
