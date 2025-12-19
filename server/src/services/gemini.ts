@@ -36,7 +36,6 @@ export const generateBookContent = async (
   const tools = useSearch && !jsonMode ? [{ googleSearch: {} }] : [];
 
   const config: any = {
-    systemInstruction: SYSTEM_INSTRUCTION,
     tools: tools,
   };
 
@@ -44,11 +43,14 @@ export const generateBookContent = async (
     config.responseMimeType = 'application/json';
   }
 
+  // Prepend system instruction to the prompt instead
+  const fullPrompt = `${SYSTEM_INSTRUCTION}\n\n${prompt}`;
+
   try {
     console.log(`🤖 Calling Gemini (${GEMINI_MODEL_TEXT}) with search=${useSearch}...`);
     const response = await ai.models.generateContent({
       model: GEMINI_MODEL_TEXT,
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
       ...config,
     });
 
@@ -117,10 +119,13 @@ ${content}`;
 
   try {
     console.log(`🌐 Translating content to ${targetLanguage}...`);
+
+    // Prepend system instruction to prompt
+    const fullPrompt = `You are a professional translator. Translate accurately while preserving formatting.\n\n${prompt}`;
+
     const response = await ai.models.generateContent({
       model: GEMINI_MODEL_TEXT,
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      systemInstruction: 'You are a professional translator. Translate accurately while preserving formatting.',
+      contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
     });
 
     console.log(`✅ Translation to ${targetLanguage} completed`);
