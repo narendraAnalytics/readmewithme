@@ -49,4 +49,18 @@ export const FEATURES: Feature[] = [
     description: 'Discover books across Tech, Science, Philosophy, and more',
     gradientColors: ['#EC4899', '#F43F5E'], // Pink to Rose
   },
+  {
+    id: 7,
+    icon: '🔐',
+    title: 'Clerk Auth',
+    description: 'Secure, modern authentication with social login and profile management',
+    gradientColors: ['#6366F1', '#A855F7'], // Indigo to Purple
+  },
+  {
+    id: 8,
+    icon: '⚡',
+    title: 'Neon Database',
+    description: 'Serverless Postgres for ultra-fast, scalable data storage and reliability',
+    gradientColors: ['#00E599', '#0070F3'], // Neon Green to Blue
+  },
 ];
