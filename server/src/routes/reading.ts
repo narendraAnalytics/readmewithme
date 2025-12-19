@@ -7,7 +7,8 @@ import {
   getReadingGuide,
   updateReadingProgress,
 } from '../db/queries/reading';
-import { generateBookContent } from '../services/gemini';
+import { getTranslation, saveTranslation } from '../db/queries/translations';
+import { generateBookContent, translateReadingGuide } from '../services/gemini';
 
 const router = Router();
 
@@ -108,6 +109,80 @@ Use Google Search to ensure accuracy.`;
     res.json({
       guide: response.text,
       languageCode: 'en',
+      cached: false,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/reading/translate
+ * Translate reading guide to target language
+ */
+router.post('/translate', requireAuth, async (req, res, next) => {
+  try {
+    const clerkId = req.auth!.userId;
+    const { bookTitle, bookAuthor, targetLanguageCode } = req.body;
+
+    if (!bookTitle || !bookAuthor || !targetLanguageCode) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        message: 'bookTitle, bookAuthor, and targetLanguageCode are required',
+      });
+    }
+
+    // Check if translation already exists
+    const cached = await getTranslation(
+      clerkId,
+      bookTitle,
+      bookAuthor,
+      targetLanguageCode
+    );
+
+    if (cached?.translatedContent) {
+      return res.json({
+        text: cached.translatedContent,
+        languageCode: targetLanguageCode,
+        cached: true,
+      });
+    }
+
+    // Get the English version (original content)
+    const englishGuide = await getReadingGuide(clerkId, bookTitle, bookAuthor);
+    if (!englishGuide?.readingGuideContent) {
+      return res.status(404).json({
+        error: 'Reading guide not found',
+        message: 'Please generate the English reading guide first',
+      });
+    }
+
+    // Translate using Gemini
+    const languageNames = {
+      te: 'Telugu',
+      hi: 'Hindi',
+      ta: 'Tamil',
+      mr: 'Marathi',
+    };
+    const languageName = languageNames[targetLanguageCode as keyof typeof languageNames] || targetLanguageCode;
+
+    const translatedText = await translateReadingGuide(
+      englishGuide.readingGuideContent,
+      languageName
+    );
+
+    // Save translation to cache
+    await saveTranslation(
+      clerkId,
+      bookTitle,
+      bookAuthor,
+      targetLanguageCode,
+      translatedText
+    );
+
+    res.json({
+      text: translatedText,
+      languageCode: targetLanguageCode,
       cached: false,
     });
   } catch (error) {

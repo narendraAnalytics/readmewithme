@@ -119,6 +119,33 @@ export const bookCache = pgTable(
   })
 );
 
+/**
+ * Translated Reading Guides table
+ * Stores translated versions of reading guides in different languages
+ */
+export const translatedReadingGuides = pgTable(
+  'translated_reading_guides',
+  {
+    id: serial('id').primaryKey(),
+    clerkId: text('clerk_id').notNull(),
+    bookTitle: text('book_title').notNull(),
+    bookAuthor: text('book_author').notNull(),
+    languageCode: text('language_code').notNull(), // 'te', 'hi', 'ta', 'mr'
+    translatedContent: text('translated_content').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    clerkIdIdx: index('translated_guides_clerk_id_idx').on(table.clerkId),
+    uniqueTranslation: unique('unique_translation').on(
+      table.clerkId,
+      table.bookTitle,
+      table.bookAuthor,
+      table.languageCode
+    ),
+  })
+);
+
 // Type exports for TypeScript
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -134,3 +161,6 @@ export type NewQuizAttempt = typeof quizAttempts.$inferInsert;
 
 export type BookCache = typeof bookCache.$inferSelect;
 export type NewBookCache = typeof bookCache.$inferInsert;
+
+export type TranslatedReadingGuide = typeof translatedReadingGuides.$inferSelect;
+export type NewTranslatedReadingGuide = typeof translatedReadingGuides.$inferInsert;

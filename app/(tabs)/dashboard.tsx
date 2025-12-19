@@ -6,8 +6,8 @@ import { getBooksByTopic, searchBooks } from '@/services/api';
 import { readingApi } from '@/services/backendApi';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
-import { Redirect, router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { Redirect, router, useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -59,13 +59,15 @@ export default function DashboardScreen() {
     }
   };
 
-  // Load reading history when user is signed in
+  // Load reading history when screen is focused
   // Rule of Hooks: Move before early returns
-  useEffect(() => {
-    if (isSignedIn && user?.id) {
-      loadRecentBooks();
-    }
-  }, [isSignedIn, user?.id]);
+  useFocusEffect(
+    useCallback(() => {
+      if (isSignedIn && user?.id) {
+        loadRecentBooks();
+      }
+    }, [isSignedIn, user?.id])
+  );
 
   // Auth check - show loading while Clerk initializes
   if (!isLoaded) {

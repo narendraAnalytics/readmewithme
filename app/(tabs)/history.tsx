@@ -1,8 +1,8 @@
 import { readingApi } from '@/services/backendApi';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
-import { Redirect, router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { Redirect, router, useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -44,12 +44,14 @@ export default function HistoryScreen() {
     }
   };
 
-  // Load history when user is signed in - MUST be before early returns
-  useEffect(() => {
-    if (isSignedIn && user?.id) {
-      loadHistory();
-    }
-  }, [isSignedIn, user?.id]);
+  // Load history when screen is focused - MUST be before early returns
+  useFocusEffect(
+    useCallback(() => {
+      if (isSignedIn && user?.id) {
+        loadHistory();
+      }
+    }, [isSignedIn, user?.id])
+  );
 
   // Auth check - show loading while Clerk initializes
   if (!isLoaded) {

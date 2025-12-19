@@ -97,3 +97,36 @@ Example format:
     throw new Error('Failed to parse quiz questions');
   }
 };
+
+/**
+ * Translate reading guide content to target language using Gemini
+ */
+export const translateReadingGuide = async (
+  content: string,
+  targetLanguage: string
+): Promise<string> => {
+  const prompt = `Translate the following book reading guide to ${targetLanguage}.
+Preserve all markdown formatting (##, ###, **, bullet points).
+Maintain the same structure and sections.
+Only translate the text content, keep the markdown syntax intact.
+
+Content to translate:
+${content}`;
+
+  const ai = getAiClient();
+
+  try {
+    console.log(`🌐 Translating content to ${targetLanguage}...`);
+    const response = await ai.models.generateContent({
+      model: GEMINI_MODEL_TEXT,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      systemInstruction: 'You are a professional translator. Translate accurately while preserving formatting.',
+    });
+
+    console.log(`✅ Translation to ${targetLanguage} completed`);
+    return response.text || 'Translation failed.';
+  } catch (error: any) {
+    console.error('❌ Translation Error:', error.message || error);
+    throw error;
+  }
+};

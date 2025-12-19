@@ -106,19 +106,25 @@ export default function ReadingScreen() {
       return;
     }
 
-    // TODO: Translation feature needs backend endpoint
-    // For now, only English is supported
-    alert('Translation feature coming soon! Currently only English is supported.');
+    // If switching to English, use the original cached content
+    if (langCode === 'en' && contentCache['en']) {
+      setCurrentLang('en');
+      setContent(contentCache['en']);
+      return;
+    }
 
-    /* const originalText = contentCache['en'];
+    // For non-English languages, fetch translation from backend
+    const originalText = contentCache['en'];
     if (!originalText) return;
 
     setIsTranslating(true);
 
     try {
-      const targetLang = LANGUAGES.find(l => l.code === langCode)?.native || langCode;
-      // TODO: Create backend endpoint for translation
-      // const response = await readingApi.translateGuide(originalText, targetLang);
+      const response = await readingApi.translateGuide(
+        bookTitle,
+        bookAuthor,
+        langCode
+      );
 
       setContentCache(prev => ({ ...prev, [langCode]: response.text }));
       setContent(response.text);
@@ -128,7 +134,7 @@ export default function ReadingScreen() {
       alert('Translation failed. Please try again.');
     } finally {
       setIsTranslating(false);
-    } */
+    }
   };
 
   // Helper component for gradient text

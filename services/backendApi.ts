@@ -67,6 +67,19 @@ export const readingApi = {
     });
     return response.data;
   },
+
+  translateGuide: async (
+    bookTitle: string,
+    bookAuthor: string,
+    targetLanguageCode: string
+  ) => {
+    const response = await apiClient.post('/reading/translate', {
+      bookTitle,
+      bookAuthor,
+      targetLanguageCode,
+    });
+    return response.data;
+  },
 };
 
 /**
